@@ -14,12 +14,13 @@
   <a href="https://central.sonatype.com/artifact/com.tesote/sdk"><img alt="Maven Central" src="https://img.shields.io/maven-central/v/com.tesote/sdk?label=maven&color=c71a36"></a>
   <a href="https://packagist.org/packages/tesote/sdk"><img alt="Packagist" src="https://img.shields.io/packagist/v/tesote/sdk?label=packagist&color=f28d1a"></a>
   <a href="https://pkg.go.dev/github.com/tesote/sdk/go"><img alt="Go" src="https://img.shields.io/github/v/tag/tesote/sdk?filter=go-*&label=go&color=00add8"></a>
+  <a href="https://www.nuget.org/packages/Tesote.Sdk"><img alt="NuGet" src="https://img.shields.io/nuget/v/Tesote.Sdk?label=nuget&color=004880"></a>
   <br/>
   <a href="https://github.com/tesote/sdk/actions/workflows/parity-check.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/tesote/sdk/parity-check.yml?label=CI"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/tesote/sdk?color=blue"></a>
 </p>
 
-Official client SDKs for the [equipo.tesote.com](https://equipo.tesote.com) API. One repo, six languages, identical surface.
+Official client SDKs for the [equipo.tesote.com](https://equipo.tesote.com) API. One repo, seven languages, identical surface.
 
 | Language | Package | Install |
 |----------|---------|---------|
@@ -29,6 +30,7 @@ Official client SDKs for the [equipo.tesote.com](https://equipo.tesote.com) API.
 | Java | `com.tesote:sdk` | Maven Central |
 | PHP | [`tesote/sdk`](https://packagist.org/packages/tesote/sdk) | `composer require tesote/sdk` |
 | Go | `github.com/tesote/sdk/go` | `go get github.com/tesote/sdk/go` |
+| C# / .NET | [`Tesote.Sdk`](https://www.nuget.org/packages/Tesote.Sdk) | `dotnet add package Tesote.Sdk` |
 
 Full docs: **https://www.tesote.com/docs/sdk**
 
@@ -91,6 +93,15 @@ var tesote = V2Client.builder().apiKey(System.getenv("TESOTE_API_KEY")).build();
 var accounts = tesote.accounts().list();
 ```
 
+**C# / .NET** ([`Tesote.Sdk`](https://www.nuget.org/packages/Tesote.Sdk))
+
+```csharp
+using Tesote.Sdk;
+
+var tesote = new V2Client(new ClientOptions { ApiKey = Environment.GetEnvironmentVariable("TESOTE_API_KEY")! });
+var accounts = await tesote.Accounts.ListAsync();
+```
+
 ---
 
 ## What you get
@@ -151,8 +162,8 @@ This repo is a multi-language monorepo. Each language is independently testable 
 
 | Task | Command (per-language dir) |
 |------|---------------------------|
-| Test | `bun test` · `pytest` · `bundle exec rspec` · `./gradlew test` · `composer test` · `go test ./...` |
-| Lint | language-native (`biome`, `ruff`, `rubocop`, `spotless`, `phpstan`, `golangci-lint`) |
+| Test | `bun test` · `pytest` · `bundle exec rspec` · `./gradlew test` · `composer test` · `go test ./...` · `dotnet test` |
+| Lint | language-native (`biome`, `ruff`, `rubocop`, `spotless`, `phpstan`, `golangci-lint`, `dotnet format`) |
 | Replay-record | `bin/record-cassettes` (per-language; needs staging key) |
 
 CI runs on **Blacksmith 2vcpu** runners. Releases are tag-driven per language: `ts-v1.4.2`, `python-v0.9.0`, etc. See [`docs/architecture/release.md`](docs/architecture/release.md).
@@ -177,7 +188,7 @@ Start here: [`docs/architecture/README.md`](docs/architecture/README.md).
 
 ## Contributing
 
-Issues and PRs welcome. Read [`CLAUDE.md`](CLAUDE.md) and the architecture docs first — public-API changes need to land in **all six languages** in the same PR.
+Issues and PRs welcome. Read [`CLAUDE.md`](CLAUDE.md) and the architecture docs first — public-API changes need to land in **all seven languages** in the same PR.
 
 ## License
 

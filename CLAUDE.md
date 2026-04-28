@@ -12,14 +12,15 @@ Repo name: `tesote-sdk`. npm uses scoped `@tesote.com/sdk` (org `tesote.com`); o
 | Java       | `packages/java/`   | `com.tesote:sdk`           | Java 17     | Maven Central    |
 | PHP        | `packages/php/`    | `tesote/sdk`               | PHP 8.1     | Packagist        |
 | Go         | `go/` (repo root)  | `github.com/tesote/sdk/go` | Go 1.21     | proxy.golang.org |
+| C# / .NET  | `packages/csharp/` | `Tesote.Sdk`               | net8.0      | NuGet            |
 
 ## Versions & deps
 
 - **Min runtime** (table above): conservative floor. No features/syntax younger than the floor. No experimental.
-- **Runtime deps: zero.** Stdlib only for HTTP, JSON, retries, caching. TS `fetch`, Python `urllib.request`+`json`, Ruby `Net::HTTP`+`json`, Java `java.net.http.HttpClient` (`jackson-databind` allowed if `jakarta.json` too awkward — only acceptable runtime dep), PHP ext-curl+`json_*`, Go `net/http`+`encoding/json`.
+- **Runtime deps: zero.** Stdlib only for HTTP, JSON, retries, caching. TS `fetch`, Python `urllib.request`+`json`, Ruby `Net::HTTP`+`json`, Java `java.net.http.HttpClient` (`jackson-databind` allowed if `jakarta.json` too awkward — only acceptable runtime dep), PHP ext-curl+`json_*`, Go `net/http`+`encoding/json`, C# `System.Net.Http`+`System.Text.Json` (in-box; never Newtonsoft).
 - **Dev/test/build deps**: latest stable, loose pins (`^x.y`, `~> x.y` — never `=x.y.z`). Actions: latest major (`actions/checkout@v4`). Test matrix: floor + latest LTS + current stable.
 - Each language independently versioned, released, tested. No cross-language code sharing — duplicate idiomatically.
-- **Semver**: patch is per-language only; minor and major land across all six in lockstep, gated by `parity-check.yml`.
+- **Semver**: patch is per-language only; minor and major land across all seven in lockstep, gated by `parity-check.yml`.
 - **Initial releases ship as `0.1.x`.** Pre-1.0 — surface may evolve from early-adopter feedback. `1.0.0` lands once 0.1.x has shipped stable for one cycle.
 
 ## API source of truth

@@ -106,6 +106,14 @@ reviews:
         - Errors are typed structs implementing the error interface; use errors.As/Is, never string-matching.
         - golangci-lint runs in CI — don't suggest style fixes.
 
+    - path: "packages/csharp/**/*.cs"
+      instructions: |
+        - net8.0 floor. Async-first: every public method returns Task<T> or ValueTask<T> with CancellationToken parameter.
+        - Runtime deps: System.Net.Http + System.Text.Json (in-box) only. Flag any new PackageReference in src/. Never Newtonsoft.Json.
+        - File-scoped namespaces, nullable enabled, ConfigureAwait(false) on all awaits in library code.
+        - One class per file. Errors are typed exceptions; ApiException base + per-error_code subclasses.
+        - TreatWarningsAsErrors is on — don't suggest "// suppress warning" pragmas; fix the underlying issue.
+
     - path: "spec/**/*"
       instructions: |
         - Cross-language parity spec — any change here must land identical in all 6 packages or parity-check.yml fails.
@@ -114,7 +122,7 @@ reviews:
     - path: "**/CHANGELOG.md"
       instructions: |
         - One section per published version. Keep a Changelog format.
-        - Bumping the language's version source file (package.json, pyproject.toml, version.rb, build.gradle.kts, VERSION, version.go) is what triggers a release — verify the CHANGELOG entry matches the new version.
+        - Bumping the language's version source file (package.json, pyproject.toml, version.rb, build.gradle.kts, VERSION, version.go, Tesote.Sdk.csproj) is what triggers a release — verify the CHANGELOG entry matches the new version.
 
     - path: ".github/workflows/**/*.yml"
       instructions: |

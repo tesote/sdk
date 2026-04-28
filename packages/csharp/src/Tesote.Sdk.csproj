@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Tesote.Sdk</RootNamespace>
+    <AssemblyName>Tesote.Sdk</AssemblyName>
+    <!-- why: CS1591 = missing XML doc on public type; we don't want to spam every internal class.
+         Public surface still gets warnings via the analyzer rules in .editorconfig. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Tesote.Sdk</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Tesote</Authors>
+    <Company>Tesote</Company>
+    <Description>Official C# / .NET SDK for the equipo.tesote.com API.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://www.tesote.com/docs/sdk/csharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tesote/sdk</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>tesote sdk api client</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>See CHANGELOG.md</PackageReleaseNotes>
+    <Copyright>Copyright (c) 2026 Tesote</Copyright>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

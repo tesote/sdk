@@ -1,0 +1,115 @@
+name: csharp
+
+# why: NuGet trusted publishing (OIDC, GA Sept 2025) — no long-lived API key.
+# Trust policy at https://www.nuget.org/account/trustedpublishing binds:
+#   owner=tesote (GitHub org #140468734) · repo=sdk (#1223751708) ·
+#   workflow=csharp.yml · package owner=tesotedev
+# Version source is `<Version>` in src/Tesote.Sdk.csproj. Bumping it +
+# flipping CHANGELOG to a date triggers `dotnet pack` + `dotnet nuget push`.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/csharp/**'
+      - 'spec/**'
+      - '.github/workflows/csharp.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/csharp/**'
+      - 'spec/**'
+      - '.github/workflows/csharp.yml'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: packages/csharp
+
+jobs:
+  test:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    strategy:
+      fail-fast: false
+      matrix:
+        dotnet: ['8.0.x', '9.0.x']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+      - name: dotnet restore
+        run: dotnet restore
+      - name: dotnet build
+        run: dotnet build --configuration Release --no-restore
+      - name: dotnet test
+        run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal"
+
+  release:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: gate on version
+        id: gate
+        run: |
+          set -euo pipefail
+          version="$(grep -oE '<Version>[^<]+</Version>' src/Tesote.Sdk.csproj | head -1 | sed -E 's/<\/?Version>//g')"
+          tag="csharp-v$version"
+          release=true
+          if git -C "$GITHUB_WORKSPACE" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "tag $tag already exists; skipping release."
+            release=false
+          elif grep -qE "^## ${version} - unreleased" CHANGELOG.md; then
+            echo "CHANGELOG marks ${version} as unreleased; skipping publish."
+            release=false
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - if: steps.gate.outputs.release == 'true'
+        name: dotnet pack
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet pack src/Tesote.Sdk.csproj --configuration Release --no-build --output ./artifacts
+          ls -la ./artifacts/
+      - if: steps.gate.outputs.release == 'true'
+        name: NuGet login (OIDC → temp API key)
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: tesotedev
+      - if: steps.gate.outputs.release == 'true'
+        name: dotnet nuget push
+        run: |
+          dotnet nuget push './artifacts/*.nupkg' \
+            --api-key "${{ steps.nuget_login.outputs.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+      - if: steps.gate.outputs.release == 'true'
+        name: tag and GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          tag="${{ steps.gate.outputs.tag }}"
+          git tag "$tag"
+          git push origin "$tag"
+          gh release create "$tag" \
+            --title "C# SDK ${{ steps.gate.outputs.version }}" \
+            --generate-notes
