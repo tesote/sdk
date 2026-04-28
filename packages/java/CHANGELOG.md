@@ -4,7 +4,17 @@ All notable changes to the `com.tesote:sdk` artifact are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.1.0 - 2026-04-28
+## 0.1.1 - 2026-04-28
+
+### Changed
+
+- Replaced `2.+` / `5.+` / `4.+` / `1.+` Gradle dynamic version notation
+  with explicit Maven ranges (`[2.18,3)` etc). Sonatype Central Portal
+  validation rejects POMs containing `+` in dependency versions, which
+  failed the 0.1.0 deployment. Same dependency intent, Central-compatible
+  POM.
+
+## 0.1.0 - 2026-04-28 *(rejected by Central — see 0.1.1)*
 
 Initial bootstrap.
 

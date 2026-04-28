@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.tesote"
-version = "0.1.0"
+version = "0.1.1"
 description = "Official Java SDK for the equipo.tesote.com API"
 
 java {
@@ -28,11 +28,16 @@ dependencies {
     // why: stdlib java.net.http handles HTTP; jackson-databind is the single
     // runtime dep because jakarta.json's pull-style API is too awkward for
     // the dynamic envelopes the API returns. Justified in README.
-    api("com.fasterxml.jackson.core:jackson-databind:2.+")
+    //
+    // Version range (not `2.+`): Maven Central's component validation
+    // rejects POMs that contain `+` in dependency versions. `[2.18,3)` is
+    // the equivalent — any 2.x ≥ 2.18, never 3.x. Same shape used below for
+    // test deps so all generated POMs are Central-compatible.
+    api("com.fasterxml.jackson.core:jackson-databind:[2.18,3)")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.+")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.+")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.+")
+    testImplementation("org.junit.jupiter:junit-jupiter:[5.10,6)")
+    testImplementation("com.squareup.okhttp3:mockwebserver:[4.12,5)")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:[1.10,2)")
 }
 
 tasks.test {
