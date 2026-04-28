@@ -23,22 +23,26 @@ Pre-release tags allowed: `ts-v1.5.0-rc.1`, `python-v1.0.0-beta.2`. Pre-releases
 
 ```
 .github/workflows/
-├── ts-test.yml         on: [pull_request, push to main]   paths: ['ts/**', 'spec/**']
-├── ts-release.yml      on: push tags 'ts-v*'
-├── python-test.yml     ...
-├── python-release.yml  ...
-├── ruby-test.yml
-├── ruby-release.yml
-├── java-test.yml
-├── java-release.yml
-├── php-test.yml
-├── php-release.yml
-├── go-test.yml
-├── go-release.yml
-└── parity-check.yml    on: [pull_request]                  cross-language method/error parity
+├── ts.yml          all 3 jobs: detect → test → release (on tag)
+├── python.yml      same
+├── ruby.yml        same
+├── java.yml        same
+├── php.yml         same
+├── go.yml          same
+└── parity-check.yml   cross-language method/error parity (on PR)
 ```
 
 All `runs-on: blacksmith-2vcpu-ubuntu-2204`.
+
+### Three jobs per language
+
+| Job | Trigger | Purpose |
+|-----|---------|---------|
+| `detect` | every push/PR | `dorny/paths-filter@v3` outputs `should_run` if `packages/<lang>/**` or `spec/**` changed |
+| `test` | `needs: detect`, `if: should_run` | unit tests + integration replay tests; matrix across supported language versions |
+| `release` | `if: startsWith(github.ref, 'refs/tags/<lang>-v')` | verify tag = manifest version, build, publish, GitHub Release |
+
+`detect` is the gatekeeper — a PR touching only `packages/python/` doesn't run TS, Ruby, Java, PHP, Go tests. Saves Blacksmith minutes.
 
 ## Release checklist (codified, not manual)
 

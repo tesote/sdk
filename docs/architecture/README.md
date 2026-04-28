@@ -22,7 +22,8 @@ These docs define how every `tesote-sdk` (TS, Python, Ruby, Java, PHP, Go) is st
 
 ```
 sdk/
-├── ts/        python/    ruby/    java/    php/    go/
+├── packages/
+│   ├── ts/    python/    ruby/    java/    php/    go/
 ├── docs/
 │   └── architecture/   ← this directory
 ├── spec/                ← vendored OpenAPI snapshots (v1, v2; v3 derived)

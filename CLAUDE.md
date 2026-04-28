@@ -8,14 +8,19 @@ Public monorepo for the official client SDKs of the **equipo.tesote.com** API. G
 
 Languages shipped from here. Repo-level name is `tesote-sdk`; the npm package uses the scoped form `@tesote/sdk`. Other registries use `tesote-sdk`.
 
-| Language | Folder    | Package name              | Registry        |
-|----------|-----------|---------------------------|-----------------|
-| TypeScript | `ts/`     | `@tesote/sdk`             | npm             |
-| Python   | `python/` | `tesote-sdk`              | PyPI            |
-| Ruby     | `ruby/`   | `tesote-sdk`              | RubyGems        |
-| Java     | `java/`   | `com.tesote:sdk`          | Maven Central   |
-| PHP      | `php/`    | `tesote/sdk`              | Packagist       |
-| Go       | `go/`     | `github.com/tesote/sdk/go` | proxy.golang.org |
+| Language | Folder              | Package name              | Min version | Registry        |
+|----------|---------------------|---------------------------|-------------|-----------------|
+| TypeScript | `packages/ts/`     | `@tesote/sdk`             | Node 18     | npm             |
+| Python   | `packages/python/` | `tesote-sdk`              | Python 3.9  | PyPI            |
+| Ruby     | `packages/ruby/`   | `tesote-sdk`              | Ruby 3.0    | RubyGems        |
+| Java     | `packages/java/`   | `com.tesote:sdk`          | Java 17     | Maven Central   |
+| PHP      | `packages/php/`    | `tesote/sdk`              | PHP 8.1     | Packagist       |
+| Go       | `packages/go/`     | `github.com/tesote/sdk/go` | Go 1.21    | proxy.golang.org |
+
+Two axes, don't conflate them:
+
+- **Min runtime version** (above): conservative, set the floor low so the SDK works on widely-deployed runtimes. No syntax/features younger than the floor. No experimental features. No clever tricks.
+- **Dependencies + tooling**: pin to **latest stable**. `httpx`, `faraday`, `guzzle`, `jackson`, `vitest`, `pytest`, `rspec`, `junit-jupiter`, `phpunit`, etc. — newest released version at scaffold time. GitHub Actions: latest major (`actions/checkout@v4`, `actions/setup-node@v4`, `actions/setup-python@v5`, etc.). Test the SDK on a matrix that includes the latest LTS *and* the current stable for that language.
 
 Each language is independently versioned, released, and tested. No cross-language code sharing — duplicate idiomatically rather than abstract.
 
@@ -133,6 +138,16 @@ Tags are per-language so SDKs version independently. Release secrets per registr
 ## Documentation
 
 Usage docs and API reference both live in the marketing/docs site at `../tesote.com` (do **not** duplicate them here — link from each SDK's README). When changing an SDK's public surface, also update the corresponding doc page in that repo in the same PR.
+
+## CI shape (per language)
+
+One workflow file per language under `.github/workflows/<lang>.yml`, three jobs:
+
+1. **`detect`** — `dorny/paths-filter@v3` sets `should_run` true if `packages/<lang>/**` or `spec/**` changed. Other jobs `needs: detect` and skip on false.
+2. **`test`** — unit tests (mocked HTTP) + integration tests (recorded cassettes/replay). Matrix on the language's supported version range.
+3. **`release`** — `if: startsWith(github.ref, 'refs/tags/<lang>-v')`. Verify tag matches package version, build, publish, GitHub Release.
+
+All jobs `runs-on: blacksmith-2vcpu-ubuntu-2204`.
 
 ## Deep dives
 
