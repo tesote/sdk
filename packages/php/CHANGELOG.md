@@ -4,6 +4,13 @@ All notable changes to `tesote/sdk` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to semver per [docs/architecture/release.md](../../docs/architecture/release.md).
 
+## 0.1.1 - 2026-04-28
+
+### Changed
+
+- Dual-tag releases (`php-vX.Y.Z` + `vX.Y.Z`) so Packagist parses the
+  version and indexes it alongside the cross-language tag.
+
 ## 0.1.0 - 2026-04-28
 
 ### Added
