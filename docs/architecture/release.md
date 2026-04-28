@@ -19,13 +19,13 @@ No manual `git tag`, no `gh release create` by hand, no `npm publish`. The workf
 | Ruby       | `packages/ruby/lib/tesote_sdk/version.rb`        | `ruby -r ./lib/tesote_sdk/version.rb -e 'print TesoteSdk::VERSION'`   |
 | Java       | `packages/java/build.gradle.kts` (`version`)     | `grep -E '^version = ' build.gradle.kts \| sed -E 's/.*"([^"]+)".*/\1/'` |
 | PHP        | `packages/php/VERSION`                           | `tr -d '[:space:]' < VERSION`                                         |
-| Go         | `packages/go/version.go` (`const Version`)       | `grep -oE 'Version = "[^"]+"' version.go \| sed -E 's/.*"([^"]+)".*/\1/'` |
+| Go         | `go/version.go` (`const Version`) — module lives at repo-root `go/`, not `packages/go/` | `grep -oE 'Version = "[^"]+"' version.go \| sed -E 's/.*"([^"]+)".*/\1/'` |
 
 Every language: bumping that file is what triggers a release. No tags pushed by humans.
 
 ## Tag scheme
 
-One namespace per language, semver: `ts-v1.4.2`, `python-v0.9.0`, `ruby-v2.0.0`, `java-v1.1.0`, `php-v0.5.3`, `go-v3.0.0`. The release job creates the tag; `proxy.golang.org` and Packagist consume them. npm, PyPI, RubyGems, Maven Central use direct publish from the workflow.
+One namespace per language, semver: `ts-v1.4.2`, `python-v0.9.0`, `ruby-v2.0.0`, `java-v1.1.0`, `php-v0.5.3`. Go uses the Go-toolchain submodule format `go/v3.0.0` (slash, not dash) because `proxy.golang.org` requires `<subdir>/vX.Y.Z` for modules in repo subdirectories. PHP additionally pushes a plain `vX.Y.Z` alongside `php-vX.Y.Z` so Packagist parses the semver. The release job creates the tag(s); `proxy.golang.org` and Packagist consume them. npm, PyPI, RubyGems, Maven Central use direct publish from the workflow.
 
 Pre-release tags allowed: `ts-v1.5.0-rc.1`, `python-v1.0.0-beta.2`. Pre-releases publish to the registry's pre-release channel (npm `--tag next`, PyPI `pre-release` flag).
 

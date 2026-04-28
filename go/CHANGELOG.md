@@ -6,7 +6,7 @@ All notable changes to this SDK are documented here. Format: [Keep a Changelog](
 
 ### Added
 
-- Initial Go SDK scaffold under `packages/go/`.
+- Initial Go SDK scaffold under `go/`.
 - `tesote.Client` transport with bearer auth, exp-backoff retries (3 attempts, 250ms base, 8s cap), rate-limit header capture (`LastRateLimit()`), auto-generated UUIDv4 idempotency keys for mutations, request-id propagation, opt-in TTL LRU cache via `CacheBackend`, bearer redaction.
 - Typed error hierarchy mirroring `docs/architecture/errors.md`: sentinels (`ErrUnauthorized`, `ErrRateLimitExceeded`, etc.) plus rich `*APIError` subtypes (`*RateLimitExceededError`, `*WorkspaceSuspendedError`, ...) and transport errors (`*NetworkError`, `*TimeoutError`, `*TLSError`).
 - `v1`, `v2` packages with per-resource service stubs.

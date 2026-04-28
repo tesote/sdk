@@ -11,7 +11,7 @@ Repo name: `tesote-sdk`. npm uses scoped `@tesote.com/sdk` (org `tesote.com`); o
 | Ruby       | `packages/ruby/`   | `tesote-sdk`               | Ruby 3.0    | RubyGems         |
 | Java       | `packages/java/`   | `com.tesote:sdk`           | Java 17     | Maven Central    |
 | PHP        | `packages/php/`    | `tesote/sdk`               | PHP 8.1     | Packagist        |
-| Go         | `packages/go/`     | `github.com/tesote/sdk/go` | Go 1.21     | proxy.golang.org |
+| Go         | `go/` (repo root)  | `github.com/tesote/sdk/go` | Go 1.21     | proxy.golang.org |
 
 ## Versions & deps
 

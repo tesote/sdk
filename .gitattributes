@@ -11,7 +11,7 @@
 /CLAUDE.md              export-ignore
 /bin                    export-ignore
 /docs                   export-ignore
-/packages/go            export-ignore
+/go                     export-ignore
 /packages/java          export-ignore
 /packages/python        export-ignore
 /packages/ruby          export-ignore

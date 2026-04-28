@@ -99,7 +99,7 @@ reviews:
         - PHPStan analysis is enforced — don't add `@phpstan-ignore` to silence errors; fix the underlying type.
         - No `?->` nullsafe hiding — make nil explicit per CLAUDE.md style.
 
-    - path: "packages/go/**/*.go"
+    - path: "go/**/*.go"
       instructions: |
         - Go 1.21 floor. No generics-heavy patterns where a plain interface suffices.
         - Runtime deps: net/http + encoding/json only. Flag any go.mod additions.

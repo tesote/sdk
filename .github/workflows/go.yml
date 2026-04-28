@@ -1,20 +1,23 @@
 name: go
 
-# why: Go version source is the `Version` const in packages/go/version.go.
-# Releases are tag-driven for proxy.golang.org — push origin <tag> and the
-# proxy auto-discovers it; no publisher step.
+# why: Go module path is `github.com/tesote/sdk/go`, so the source lives at
+# `go/` at repo root (not `packages/go/`) — proxy.golang.org maps the part of
+# the module path after the repo URL to the directory. Submodule semver tags
+# follow `<subdir>/vX.Y.Z`, so the release tag is `go/vX.Y.Z`. Releases are
+# tag-driven for the proxy — push origin <tag> and the proxy auto-discovers
+# it; no publisher step.
 
 on:
   push:
     branches: [main]
     paths:
-      - 'packages/go/**'
+      - 'go/**'
       - 'spec/**'
       - '.github/workflows/go.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'packages/go/**'
+      - 'go/**'
       - 'spec/**'
       - '.github/workflows/go.yml'
 
@@ -26,7 +29,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: packages/go
+    working-directory: go
 
 jobs:
   test:
@@ -40,7 +43,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-          cache-dependency-path: packages/go/go.sum
+          cache-dependency-path: go/go.sum
       - name: gofmt
         run: gofmt -l . | tee /dev/stderr | (! read)
       - name: go vet
@@ -51,7 +54,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
-          working-directory: packages/go
+          working-directory: go
 
   release:
     needs: test
@@ -64,14 +67,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: packages/go/go.sum
+          cache-dependency-path: go/go.sum
       - name: gate on version
         id: gate
-        working-directory: packages/go
+        working-directory: go
         run: |
           set -euo pipefail
           version="$(grep -oE 'Version = "[^"]+"' version.go | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
-          tag="go-v$version"
+          tag="go/v$version"
           release=true
           if git -C "$GITHUB_WORKSPACE" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
             echo "tag $tag already exists; skipping release."
@@ -85,7 +88,7 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - if: steps.gate.outputs.release == 'true'
         name: verify CHANGELOG entry
-        working-directory: packages/go
+        working-directory: go
         run: |
           version="${{ steps.gate.outputs.version }}"
           if ! grep -qE "^## ${version}( |$)" CHANGELOG.md; then
@@ -99,6 +102,8 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           # why: proxy.golang.org auto-discovers via the new tag — no publish step.
+          # Submodule tag format `go/vX.Y.Z` is required because the module
+          # lives in a repo subdirectory.
           tag="${{ steps.gate.outputs.tag }}"
           git tag "$tag"
           git push origin "$tag"
