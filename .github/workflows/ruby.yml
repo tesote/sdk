@@ -14,6 +14,9 @@ on:
       - 'spec/**'
       - '.github/workflows/ruby.yml'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 permissions:
   contents: read
 
@@ -76,7 +79,7 @@ jobs:
         run: gem build tesote-sdk.gemspec
       - if: steps.gate.outputs.release == 'true'
         name: configure RubyGems OIDC credentials
-        uses: rubygems/configure-rubygems-credentials@v1
+        uses: rubygems/configure-rubygems-credentials@v1.0.0
       - if: steps.gate.outputs.release == 'true'
         name: publish gem
         run: gem push "tesote-sdk-${{ steps.gate.outputs.version }}.gem"

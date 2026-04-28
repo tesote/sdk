@@ -14,6 +14,9 @@ on:
       - 'spec/**'
       - '.github/workflows/python.yml'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 permissions:
   contents: read
 
