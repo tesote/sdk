@@ -16,7 +16,6 @@
   <a href="https://pkg.go.dev/github.com/tesote/sdk/go"><img alt="Go" src="https://img.shields.io/github/v/tag/tesote/sdk?filter=go-*&label=go&color=00add8"></a>
   <a href="https://www.nuget.org/packages/Tesote.Sdk"><img alt="NuGet" src="https://img.shields.io/nuget/v/Tesote.Sdk?label=nuget&color=004880"></a>
   <br/>
-  <a href="https://github.com/tesote/sdk/actions/workflows/parity-check.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/tesote/sdk/parity-check.yml?label=CI"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/tesote/sdk?color=blue"></a>
 </p>
 
