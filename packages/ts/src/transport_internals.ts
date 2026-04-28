@@ -7,7 +7,7 @@
 import { NetworkError, type TimeoutError, TlsError } from './errors.js';
 import type { RateLimitSnapshot, RetryPolicy } from './transport_types.js';
 
-export const SDK_VERSION = '0.1.0';
+export const SDK_VERSION = '0.1.1';
 export const DEFAULT_BASE_URL = 'https://equipo.tesote.com/api';
 
 const DEFAULT_RETRY_STATUSES = new Set([429, 502, 503, 504]);

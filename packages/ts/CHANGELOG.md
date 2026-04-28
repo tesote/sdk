@@ -4,7 +4,14 @@ All notable changes to `@tesote.com/sdk` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to semver.
 
-## 0.1.0 - unreleased
+## 0.1.1 - 2026-04-28
+
+### Changed
+
+- First release published via GitHub Actions OIDC trusted publisher (no
+  manual `npm publish`). 0.1.0 was published locally as the bootstrap.
+
+## 0.1.0 - 2026-04-28
 
 ### Added
 
