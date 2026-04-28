@@ -4,16 +4,7 @@ Per-language, tag-driven, automated. All jobs on **Blacksmith 2vcpu** (`runs-on:
 
 ## Tag scheme
 
-One tag namespace per language, semver:
-
-```
-ts-v1.4.2
-python-v0.9.0
-ruby-v2.0.0
-java-v1.1.0
-php-v0.5.3
-go-v3.0.0
-```
+One tag namespace per language, semver: `ts-v1.4.2`, `python-v0.9.0`, `ruby-v2.0.0`, `java-v1.1.0`, `php-v0.5.3`, `go-v3.0.0`.
 
 A tag triggers exactly one publish workflow. Languages release independently — TS at v1.4.2 while Python is at v0.9.0 is normal.
 
@@ -23,26 +14,19 @@ Pre-release tags allowed: `ts-v1.5.0-rc.1`, `python-v1.0.0-beta.2`. Pre-releases
 
 ```
 .github/workflows/
-├── ts.yml          all 3 jobs: detect → test → release (on tag)
-├── python.yml      same
-├── ruby.yml        same
-├── java.yml        same
-├── php.yml         same
-├── go.yml          same
-└── parity-check.yml   cross-language method/error parity (on PR)
+├── ts.yml  python.yml  ruby.yml  java.yml  php.yml  go.yml   ← three jobs each: detect → test → release
+└── parity-check.yml                                          ← cross-language method/error parity (on PR)
 ```
 
 All `runs-on: blacksmith-2vcpu-ubuntu-2204`.
 
 ### Three jobs per language
 
-One workflow file per language, three jobs:
-
-| Job       | Trigger                                                  | Purpose |
-|-----------|----------------------------------------------------------|---------|
-| `detect`  | every push/PR                                            | `dorny/paths-filter@v3` outputs `should_run` if `packages/<lang>/**` or `spec/**` changed |
-| `test`    | `needs: detect`, `if: should_run`                        | unit + integration replay; matrix across supported language versions |
-| `release` | `if: startsWith(github.ref, 'refs/tags/<lang>-v')`       | verify tag = manifest version, build, publish, GitHub Release |
+| Job       | Trigger                                            | Purpose |
+|-----------|----------------------------------------------------|---------|
+| `detect`  | every push/PR                                      | `dorny/paths-filter@v3` outputs `should_run` if `packages/<lang>/**` or `spec/**` changed |
+| `test`    | `needs: detect`, `if: should_run`                  | unit + integration replay; matrix across supported language versions |
+| `release` | `if: startsWith(github.ref, 'refs/tags/<lang>-v')` | verify tag = manifest version, build, publish, GitHub Release |
 
 `detect` is the gatekeeper — a PR touching only `packages/python/` doesn't run TS, Ruby, Java, PHP, Go tests. Saves Blacksmith minutes.
 
@@ -59,13 +43,13 @@ No `NPM_TOKEN`, no `RUBYGEMS_API_KEY`, no `PYPI_API_TOKEN` — registries verify
 
 **One-time setup per registry** (not codified — done once in each registry's UI):
 
-| Registry  | Where                                                                       |
-|-----------|-----------------------------------------------------------------------------|
-| npm       | package settings → trusted publishers → add repo + workflow                 |
-| RubyGems  | gem settings → OIDC                                                          |
-| PyPI      | project settings → publishing → add trusted publisher                        |
+| Registry | Where                                                       |
+|----------|-------------------------------------------------------------|
+| npm      | package settings → trusted publishers → add repo + workflow |
+| RubyGems | gem settings → OIDC                                         |
+| PyPI     | project settings → publishing → add trusted publisher       |
 
-Maven Central uses the Sonatype Central Portal user token (NOT legacy OSSRH) — token-based, no OIDC. Packagist uses `PACKAGIST_TOKEN` — no OIDC. Go publishes by tag push via the proxy — no token, no OIDC.
+Maven Central: Sonatype Central Portal user token (NOT legacy OSSRH) — token-based, no OIDC. Packagist: `PACKAGIST_TOKEN` — no OIDC. Go: tag push via proxy — no token, no OIDC.
 
 ## Release checklist (codified, not manual)
 
@@ -100,7 +84,7 @@ Never echo secrets, never write to logs, never check into the repo.
 
 Strict semver:
 
-- **Major** — back-compat break (per [versioning.md](versioning.md)). Vanishingly rare given the back-compat policy. New API version (`V4Client`) is **minor**, not major — purely additive.
+- **Major** — back-compat break (per [versioning.md](versioning.md)). Vanishingly rare. New API version (`V4Client`) is **minor**, not major — purely additive.
 - **Minor** — additive: new resources, methods, optional params, error subclasses.
 - **Patch** — bug fixes, internal refactors, doc-only changes.
 
