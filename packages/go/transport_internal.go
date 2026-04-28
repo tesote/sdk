@@ -120,10 +120,7 @@ func shouldRetryTransport(err error, method string, hasIdempotencyKey bool) bool
 		return true
 	}
 	var netErr *NetworkError
-	if errors.As(err, &netErr) {
-		return true
-	}
-	return false
+	return errors.As(err, &netErr)
 }
 
 func readAll(r io.Reader) ([]byte, error) {
