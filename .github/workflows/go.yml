@@ -1,0 +1,86 @@
+name: go
+
+on:
+  push:
+    branches: [main]
+    tags: ['go-v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    outputs:
+      should_run: ${{ steps.filter.outputs.go }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            go:
+              - 'packages/go/**'
+              - 'spec/**'
+
+  test:
+    needs: detect
+    if: needs.detect.outputs.should_run == 'true' || startsWith(github.ref, 'refs/tags/go-v')
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.21', '1.22', '1.23']
+    defaults:
+      run:
+        working-directory: packages/go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: packages/go/go.sum
+      - name: gofmt
+        run: gofmt -l . | tee /dev/stderr | (! read)
+      - name: go vet
+        run: go vet ./...
+      - name: go test
+        run: go test -race -count=1 ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: packages/go
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/go-v')
+    needs: test
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    defaults:
+      run:
+        working-directory: packages/go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: packages/go/go.sum
+      - name: verify tag matches CHANGELOG entry
+        run: |
+          tag="${GITHUB_REF_NAME#go-v}"
+          if ! grep -qE "^## ${tag}( |$)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md is missing a '## ${tag}' section for tag ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+      - name: go test
+        run: go test ./...
+      - name: gh release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # why: proxy.golang.org discovers the new tag automatically; no publish step required
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
