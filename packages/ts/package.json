@@ -47,7 +47,7 @@
     "fintech"
   ],
   "license": "MIT",
-  "homepage": "https://www.tesote.com/docs/sdk/ts",
+  "homepage": "https://www.tesote.com/docs/ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tesote/sdk.git",

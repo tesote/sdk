@@ -8,7 +8,7 @@ Official Ruby SDK for the [equipo.tesote.com](https://equipo.tesote.com) API.
 - Typed errors per `error_code`.
 - Transport owns retries, rate-limit awareness, idempotency keys, opt-in TTL caching.
 
-End-user docs: <https://www.tesote.com/docs/sdk> (canonical).
+End-user docs: <https://www.tesote.com/docs/ruby> (canonical).
 
 ## Install
 
@@ -67,7 +67,7 @@ end
 
 ## Polling model
 
-v1 and v2 are poll-based. See the [Implementation Checklist on tesote.com](https://www.tesote.com/docs/sdk).
+v1 and v2 are poll-based. See the [Implementation Checklist on tesote.com](https://www.tesote.com/docs/ruby).
 
 ## Development
 

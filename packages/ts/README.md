@@ -51,7 +51,7 @@ try {
 
 ## Docs
 
-Full reference: <https://www.tesote.com/docs/sdk/ts>
+Full reference: <https://www.tesote.com/docs/ts>
 
 ## License
 

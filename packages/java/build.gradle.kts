@@ -61,7 +61,7 @@ publishing {
             pom {
                 name.set("Tesote Java SDK")
                 description.set(project.description)
-                url.set("https://github.com/tesote/sdk")
+                url.set("https://www.tesote.com/docs/java")
                 licenses {
                     license {
                         name.set("MIT")

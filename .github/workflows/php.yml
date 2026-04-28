@@ -65,12 +65,15 @@ jobs:
           set -euo pipefail
           version="$(tr -d '[:space:]' < VERSION)"
           tag="php-v$version"
+          release=true
           if git -C "$GITHUB_WORKSPACE" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
             echo "tag $tag already exists; skipping release."
-            echo "release=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "release=true" >> "$GITHUB_OUTPUT"
+            release=false
+          elif grep -qE "^## ${version} - unreleased" CHANGELOG.md; then
+            echo "CHANGELOG marks ${version} as unreleased; skipping publish."
+            release=false
           fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - if: steps.gate.outputs.release == 'true'
