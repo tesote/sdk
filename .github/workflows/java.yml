@@ -1,0 +1,85 @@
+name: java
+
+on:
+  push:
+    branches: [main]
+    tags: ['java-v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    outputs:
+      should_run: ${{ steps.filter.outputs.java }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            java:
+              - 'packages/java/**'
+              - 'spec/**'
+
+  test:
+    needs: detect
+    if: needs.detect.outputs.should_run == 'true' || startsWith(github.ref, 'refs/tags/java-v')
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17', '21']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Run tests
+        working-directory: packages/java
+        run: ./gradlew test --no-daemon
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/java-v')
+    needs: test
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Verify tag matches build.gradle.kts version
+        working-directory: packages/java
+        run: |
+          tag_version="${GITHUB_REF#refs/tags/java-v}"
+          gradle_version=$(grep -E '^version = ' build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ "$tag_version" != "$gradle_version" ]; then
+            echo "tag version ($tag_version) != build.gradle.kts version ($gradle_version)" >&2
+            exit 1
+          fi
+
+      - name: Build, sign, and publish to Sonatype Central Portal
+        working-directory: packages/java
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: ./gradlew publishToCentralPortal --no-daemon
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" \
+            --title "Java SDK ${tag#java-v}" \
+            --generate-notes
