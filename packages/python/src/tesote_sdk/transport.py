@@ -1,4 +1,4 @@
-"""Single HTTP client for every resource module across v1/v2/v3.
+"""Single HTTP client for every resource module across v1/v2.
 
 Owns: bearer injection, retries with exponential backoff + jitter, rate-limit
 header capture, idempotency-key auto-generation, request-id propagation into

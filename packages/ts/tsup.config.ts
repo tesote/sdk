@@ -5,7 +5,6 @@ export default defineConfig({
     index: 'src/index.ts',
     'v1/index': 'src/v1/index.ts',
     'v2/index': 'src/v2/index.ts',
-    'v3/index': 'src/v3/index.ts',
   },
   format: ['esm', 'cjs'],
   target: 'es2020',

@@ -28,7 +28,7 @@ Official client SDKs for the [equipo.tesote.com](https://equipo.tesote.com) API.
 | Ruby | [`tesote-sdk`](https://rubygems.org/gems/tesote-sdk) | `gem install tesote-sdk` |
 | Java | `com.tesote:sdk` | Maven Central |
 | PHP | [`tesote/sdk`](https://packagist.org/packages/tesote/sdk) | `composer require tesote/sdk` |
-| Go | `github.com/tesote/sdk/go` | `go get github.com/tesote/sdk/go/v3` |
+| Go | `github.com/tesote/sdk/go` | `go get github.com/tesote/sdk/go` |
 
 Full docs: **https://www.tesote.com/docs/sdk**
 
@@ -37,16 +37,16 @@ Full docs: **https://www.tesote.com/docs/sdk**
 ## Quick start
 
 ```ts
-import { V3Client } from '@tesote/sdk'
+import { V2Client } from '@tesote/sdk'
 
-const tesote = new V3Client({ apiKey: process.env.TESOTE_API_KEY! })
+const tesote = new V2Client({ apiKey: process.env.TESOTE_API_KEY! })
 const accounts = await tesote.accounts.list()
 ```
 
 ```python
-from tesote_sdk import V3Client
+from tesote_sdk import V2Client
 
-tesote = V3Client(api_key=os.environ["TESOTE_API_KEY"])
+tesote = V2Client(api_key=os.environ["TESOTE_API_KEY"])
 for account in tesote.accounts.list_all():
     print(account.id, account.balance)
 ```
@@ -54,28 +54,28 @@ for account in tesote.accounts.list_all():
 ```ruby
 require 'tesote_sdk'
 
-tesote = TesoteSdk::V3::Client.new(api_key: ENV.fetch('TESOTE_API_KEY'))
+tesote = TesoteSdk::V2::Client.new(api_key: ENV.fetch('TESOTE_API_KEY'))
 tesote.accounts.list.each { |a| puts a.id }
 ```
 
 ```go
-import tesote "github.com/tesote/sdk/go/v3"
+import tesote "github.com/tesote/sdk/go/v2"
 
 c := tesote.New(tesote.Config{APIKey: os.Getenv("TESOTE_API_KEY")})
 accounts, _ := c.Accounts.List(ctx, nil)
 ```
 
 ```php
-use Tesote\Sdk\V3\Client;
+use Tesote\Sdk\V2\Client;
 
 $tesote = new Client(['apiKey' => getenv('TESOTE_API_KEY')]);
 $accounts = $tesote->accounts->list();
 ```
 
 ```java
-import com.tesote.sdk.v3.V3Client;
+import com.tesote.sdk.v2.V2Client;
 
-var tesote = V3Client.builder().apiKey(System.getenv("TESOTE_API_KEY")).build();
+var tesote = V2Client.builder().apiKey(System.getenv("TESOTE_API_KEY")).build();
 var accounts = tesote.accounts().list();
 ```
 
@@ -83,11 +83,10 @@ var accounts = tesote.accounts().list();
 
 ## What you get
 
-- **Versioned clients side-by-side** — `V1Client`, `V2Client`, `V3Client` from the same import. Pick per call site, mix in one process. Old versions never get removed.
+- **Versioned clients side-by-side** — `V1Client`, `V2Client` from the same import. Pick per call site, mix in one process. Old versions never get removed.
 - **Transport-level reliability** — automatic retries with backoff + jitter, rate-limit-aware throttling, opt-in response caching, idempotency keys for mutations.
 - **Typed errors with full context** — one class per `error_code`, every error carries `request_id`, `http_status`, `retry_after`, `response_body`. Catch the narrow type you care about; ignore the rest.
 - **Cursor pagination** — `list()` for one page, `listAll()` for an iterator. Mutation-mid-iteration surfaces a typed `MutationDuringPaginationError`, not silent corruption.
-- **Webhook signature verification** (v3) — stateless helper, no HTTP server bundled.
 
 ---
 
@@ -97,9 +96,8 @@ var accounts = tesote.accounts().list();
 |---------|------|
 | **v1** | Accounts, transactions (read-only) |
 | **v2** | + sync sessions, transaction orders, batches, payment methods, bulk + search |
-| **v3** | + categories, counterparties, legal entities, connections, webhooks, reports, balance history, workspace, MCP |
 
-All three ship from every SDK. Back-compat is permanent.
+Both ship from every SDK. Back-compat is permanent.
 
 ---
 
@@ -153,7 +151,7 @@ CI runs on **Blacksmith 2vcpu** runners. Releases are tag-driven per language: `
 
 | Doc | Topic |
 |-----|-------|
-| [versioning.md](docs/architecture/versioning.md) | v1/v2/v3 coexistence, back-compat policy |
+| [versioning.md](docs/architecture/versioning.md) | v1/v2 coexistence, back-compat policy |
 | [transport.md](docs/architecture/transport.md)   | retries, caching, rate-limits, idempotency, pagination |
 | [errors.md](docs/architecture/errors.md)         | typed-error taxonomy, "good error" definition |
 | [resources.md](docs/architecture/resources.md)   | endpoint inventory by version |

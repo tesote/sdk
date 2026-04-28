@@ -10,7 +10,7 @@ use Tesote\Sdk\Transport;
 /**
  * v1 client. Read-only foundation: accounts + transactions, plus status/whoami.
  *
- * Constructor accepts the same shared config shape as V2/V3 — see Transport.
+ * Constructor accepts the same shared config shape as V2 — see Transport.
  */
 final class Client
 {

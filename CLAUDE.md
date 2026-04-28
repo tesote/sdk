@@ -20,7 +20,7 @@ Repo name: `tesote-sdk`. npm uses scoped `@tesote/sdk`; other registries use `te
 - **Dev/test/build deps**: latest stable, loose pins (`^x.y`, `~> x.y` — never `=x.y.z`). Actions: latest major (`actions/checkout@v4`). Test matrix: floor + latest LTS + current stable.
 - Each language independently versioned, released, tested. No cross-language code sharing — duplicate idiomatically.
 - **Semver**: patch is per-language only; minor and major land across all six in lockstep, gated by `parity-check.yml`.
-- **Initial releases ship as `0.1.x`.** Pre-1.0 — surface may evolve from early-adopter feedback. `1.0.0` lands when the v3 OpenAPI is finalized upstream and 0.1.x has shipped stable for one cycle.
+- **Initial releases ship as `0.1.x`.** Pre-1.0 — surface may evolve from early-adopter feedback. `1.0.0` lands once 0.1.x has shipped stable for one cycle.
 
 ## API source of truth
 
@@ -28,15 +28,14 @@ Upstream OpenAPI lives in the platform repo (sibling dir, vendor a snapshot — 
 
 - v1: `../<platform>/engines/tesote_api/docs/openapi.yaml` — read-only accounts + transactions
 - v2: `../<platform>/engines/tesote_api/docs/openapi_v2.yaml` — adds sync sessions, transaction orders, batches, payment methods, bulk, search
-- v3: routes only (`engines/tesote_api/config/routes.rb`, controllers under `app/controllers/tesote_api/v3/`) — adds categories, counterparties, legal entities, connections, webhooks, reports, balance history, workspace, MCP. **No OpenAPI doc yet** — derive from controllers/serializers; flag missing pieces.
 
 Expose only **client-facing, API-key-authenticated** endpoints (mounted under `TesoteApi::Engine` with `current_api_key` auth). No internal admin/session-cookie controllers.
 
 ## SDK shape
 
-Versioned clients side-by-side; consumer picks (`V1Client`, `V2Client`, `V3Client`). Per-language signatures in [versioning.md](docs/architecture/versioning.md). **Back-compat is permanent.** v1 and v2 stay shipped after v3 lands. Removing or renaming a public symbol in any version = breaking. Don't.
+Versioned clients side-by-side; consumer picks (`V1Client`, `V2Client`). Per-language signatures in [versioning.md](docs/architecture/versioning.md). **Back-compat is permanent.** v1 stays shipped after subsequent versions land. Removing or renaming a public symbol in any version = breaking. Don't.
 
-One module/file per resource (accounts, transactions, sync_sessions, transaction_orders, batches, payment_methods, categories, counterparties, legal_entities, connections, webhooks, reports, balance_history, workspace). SOLID/SRP:
+One module/file per resource (accounts, transactions, sync_sessions, transaction_orders, batches, payment_methods). SOLID/SRP:
 
 - Transport layer separate from resource clients (one HTTP client, swappable for tests).
 - Resource clients thin: marshal params → call transport → deserialize **into typed model objects, not raw maps/hashes/dicts**. Per language: TS classes/interfaces, Python `@dataclass`, Ruby PORO classes (or `Struct`), Java records, PHP readonly classes with typed properties, Go structs. Field names match the API casing in the docs but follow each language's idiomatic casing in the public model (snake_case preserved on the wire, camelCase/PascalCase on the model where idiomatic).
@@ -56,7 +55,7 @@ One class per `error_code` (full table in [errors.md](docs/architecture/errors.m
 - **Error envelope**: `{ "error": "...", "error_code": "...", "error_id": "uuid?", "retry_after": 60 }`. Map every `error_code` to a typed exception.
 - **`X-Request-Id`** on every response — attach to thrown errors; accept a logger callback.
 - **`Content-Type: application/json`** required on POST/PUT/PATCH (415 otherwise).
-- **Polling**: v1/v2 are poll-based, not push. Document in each SDK's README with example code mirroring the OpenAPI's "Implementation Checklist". v3 adds webhooks — signature-verification helpers ship in the SDK.
+- **Polling**: v1/v2 are poll-based, not push. Document in each SDK's README with example code mirroring the OpenAPI's "Implementation Checklist".
 
 ## Tests
 
@@ -81,7 +80,7 @@ End-user docs + API reference live at `../tesote.com` (`www.tesote.com/docs/sdk`
 
 ## Deep dives — `docs/architecture/`
 
-- [versioning.md](docs/architecture/versioning.md) — v1/v2/v3 coexistence, back-compat
+- [versioning.md](docs/architecture/versioning.md) — v1/v2 coexistence, back-compat
 - [transport.md](docs/architecture/transport.md) — retries, caching, rate-limits, idempotency, pagination
 - [errors.md](docs/architecture/errors.md) — typed-error taxonomy, "good error" definition
 - [resources.md](docs/architecture/resources.md) — endpoint inventory by version

@@ -9,8 +9,8 @@ Authorization: Bearer <api_key>
 No OAuth, no HMAC signing, no session cookies. SDK accepts the key at client construction:
 
 ```ts
-new V3Client({ apiKey: '...' })             // explicit
-new V3Client()                              // falls back to env TESOTE_SDK_API_KEY
+new V2Client({ apiKey: '...' })             // explicit
+new V2Client()                              // falls back to env TESOTE_SDK_API_KEY
 ```
 
 Resolution order at construction: explicit `apiKey` arg → `TESOTE_SDK_API_KEY` env var → raise `ConfigError` synchronously. Never let a half-built client make a request.
@@ -28,8 +28,8 @@ Per-language env-var read:
 Same pattern as the API key — explicit arg overrides env, env overrides default.
 
 ```ts
-new V3Client({ apiKey: '...', baseUrl: 'https://equipo-staging.tesote.com/api' })  // explicit
-new V3Client()  // baseUrl from TESOTE_SDK_API_URL, then default https://equipo.tesote.com/api
+new V2Client({ apiKey: '...', baseUrl: 'https://equipo-staging.tesote.com/api' })  // explicit
+new V2Client()  // baseUrl from TESOTE_SDK_API_URL, then default https://equipo.tesote.com/api
 ```
 
 Env var: `TESOTE_SDK_API_URL`. Default: `https://equipo.tesote.com/api`. Trailing slash stripped at construction. Invalid URL → `ConfigError`.

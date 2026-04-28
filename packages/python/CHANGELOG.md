@@ -8,7 +8,7 @@ Initial scaffold.
 
 ### Added
 
-- `V1Client`, `V2Client`, `V3Client` — three versioned clients, side-by-side per the monorepo's versioning policy.
+- `V1Client`, `V2Client` — versioned clients, side-by-side per the monorepo's versioning policy.
 - Single `Transport` on stdlib `urllib.request` + `json`. Zero runtime dependencies.
   - Bearer-token auth, automatic injection.
   - Retries with exponential backoff + full jitter; defaults: 3 attempts, base 250ms, cap 8s. Configurable via `RetryPolicy`. Retries on 429 / 502 / 503 / 504 / network errors. Never retries 4xx other than 429, never retries non-idempotent timeouts without an idempotency key.
@@ -22,6 +22,9 @@ Initial scaffold.
 - Full typed error hierarchy in `tesote_sdk.errors`. One class per `error_code`. Required fields: `error_code`, `message`, `http_status`, `request_id`, `error_id`, `retry_after`, `response_body`, `request_summary`, `attempts`. `__cause__` preserved.
 - v1: `accounts.list`, `accounts.get` wired end-to-end.
 - v2: `accounts.list`, `accounts.get` wired end-to-end. Other resources stubbed.
-- v3: `accounts.list`, `accounts.get` wired end-to-end. All other resources stubbed. `verify_webhook_signature` shipped as a stub awaiting platform spec confirmation.
-- Test suite covering transport (mocked `urllib.request.urlopen`), error mapping, and v3 accounts wiring.
+- Test suite covering transport (mocked `urllib.request.urlopen`) and error mapping.
 - `pyproject.toml` with `hatchling` build backend, optional `[test]` extras (`pytest`, `mypy`, `ruff`), no version pins.
+
+### Removed
+
+- v3 client surface (will return as a separate release once the upstream OpenAPI is finalized).

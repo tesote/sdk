@@ -4,7 +4,7 @@ Official Ruby SDK for the [equipo.tesote.com](https://equipo.tesote.com) API.
 
 - Zero runtime dependencies (stdlib `net/http` + `json` only).
 - Ruby >= 3.0.
-- Versioned clients side-by-side: `V1::Client`, `V2::Client`, `V3::Client`.
+- Versioned clients side-by-side: `V1::Client`, `V2::Client`.
 - Typed errors per `error_code`.
 - Transport owns retries, rate-limit awareness, idempotency keys, opt-in TTL caching.
 
@@ -22,7 +22,7 @@ gem 'tesote-sdk'
 ```ruby
 require 'tesote_sdk'
 
-client = TesoteSdk::V3::Client.new(api_key: ENV.fetch('TESOTE_API_KEY'))
+client = TesoteSdk::V2::Client.new(api_key: ENV.fetch('TESOTE_API_KEY'))
 
 accounts = client.accounts.list
 account  = client.accounts.get('acct_123')
@@ -35,7 +35,7 @@ client.last_request_id  # => "req_..."
 ### Configuration
 
 ```ruby
-TesoteSdk::V3::Client.new(
+TesoteSdk::V2::Client.new(
   api_key: ENV.fetch('TESOTE_API_KEY'),
   base_url: 'https://equipo-staging.tesote.com/api',
   user_agent: 'MyApp/1.2.3',
@@ -65,20 +65,9 @@ rescue TesoteSdk::UnauthorizedError => err
 end
 ```
 
-### Webhook signature verification
-
-```ruby
-TesoteSdk::V3.verify_webhook_signature(
-  body: request.raw_post,
-  signature_header: request.headers['X-Tesote-Signature'],
-  secret: ENV.fetch('TESOTE_WEBHOOK_SECRET')
-)
-```
-
 ## Polling model
 
 v1 and v2 are poll-based. See the [Implementation Checklist on tesote.com](https://www.tesote.com/docs/sdk).
-v3 adds webhooks; verify signatures with the helper above.
 
 ## Development
 

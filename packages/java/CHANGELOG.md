@@ -30,11 +30,15 @@ Initial bootstrap.
   `ServiceUnavailableException`, `TransportException`, `NetworkException`,
   `TimeoutException`, `TlsException`, `ConfigException`,
   `EndpointRemovedException`.
-- Versioned client builders: `V1Client`, `V2Client`, `V3Client`.
-- v3 `accounts().list()` and `accounts().get(id)` wired end-to-end. Other
+- Versioned client builders: `V1Client`, `V2Client`.
+- v2 `accounts().list()` and `accounts().get(id)` wired end-to-end. Other
   resources stub with `UnsupportedOperationException`.
-- JUnit 5 + MockWebServer test suite covering transport behaviors, error
-  dispatch, and v3 accounts wiring.
+- JUnit 5 + MockWebServer test suite covering transport behaviors and error
+  dispatch.
+
+### Removed
+
+- v3 client surface (will return as a separate release once the upstream OpenAPI is finalized).
 
 ### Notes
 

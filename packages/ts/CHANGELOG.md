@@ -8,7 +8,7 @@ adheres to semver.
 
 ### Added
 
-- Initial scaffold: `V1Client`, `V2Client`, `V3Client`.
+- Initial scaffold: `V1Client`, `V2Client`.
 - Native-`fetch` transport with bearer auth, exponential-backoff retries,
   rate-limit header capture (`client.lastRateLimit`), idempotency-key
   auto-generation for mutations, request-id propagation into thrown errors,
@@ -16,5 +16,8 @@ adheres to semver.
 - Full typed-error hierarchy mirroring `docs/architecture/errors.md`.
 - `accounts.list()` and `accounts.get(id)` wired end-to-end on every API
   version. Other methods stubbed with signatures.
-- `verifyWebhookSignature` exported from `@tesote/sdk` and `@tesote/sdk/v3`
-  (stub pending platform spec).
+
+### Removed
+
+- v3 client surface (will return as a separate release once the upstream
+  OpenAPI is finalized).

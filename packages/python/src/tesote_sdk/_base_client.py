@@ -1,4 +1,4 @@
-"""Shared client construction logic for v1/v2/v3 clients."""
+"""Shared client construction logic for v1/v2 clients."""
 
 from __future__ import annotations
 

@@ -4,7 +4,7 @@ Official Python SDK for the [equipo.tesote.com](https://equipo.tesote.com) API.
 
 - Zero runtime dependencies. Uses only the Python standard library.
 - Min runtime: **Python 3.9**.
-- Three versioned clients side-by-side: `V1Client`, `V2Client`, `V3Client`.
+- Versioned clients side-by-side: `V1Client`, `V2Client`.
 
 ## Install
 
@@ -15,9 +15,9 @@ pip install tesote-sdk
 ## Usage
 
 ```python
-from tesote_sdk import V3Client
+from tesote_sdk import V2Client
 
-client = V3Client(api_key="sk_live_...")
+client = V2Client(api_key="sk_live_...")
 
 for account in client.accounts.list():
     print(account["id"])
@@ -26,10 +26,10 @@ for account in client.accounts.list():
 Mix versions in the same process when you need to:
 
 ```python
-from tesote_sdk import V1Client, V3Client
+from tesote_sdk import V1Client, V2Client
 
 legacy = V1Client(api_key="sk_live_...")
-new = V3Client(api_key="sk_live_...")
+new = V2Client(api_key="sk_live_...")
 ```
 
 ## Auth
@@ -45,10 +45,10 @@ Every error inherits from `TesoteError` and carries: `error_code`, `message`, `h
 Catch the narrowest type:
 
 ```python
-from tesote_sdk import RateLimitExceededError, V3Client
+from tesote_sdk import RateLimitExceededError, V2Client
 
 try:
-    V3Client(api_key=key).accounts.list()
+    V2Client(api_key=key).accounts.list()
 except RateLimitExceededError as e:
     print(f"slow down for {e.retry_after}s (req {e.request_id})")
 ```
@@ -70,23 +70,11 @@ Configured at the client; resource modules never reimplement them:
 
 ## Polling model (v1, v2)
 
-The platform is poll-based. Use `accounts.sync(...)` (v2/v3) to trigger a refresh, then poll `accounts.get(...)` until the data settles. v3 adds webhooks; the SDK ships `verify_webhook_signature` (currently a stub awaiting the platform's signature scheme).
-
-## Webhook signature verification (v3 stub)
-
-```python
-from tesote_sdk import verify_webhook_signature
-
-verify_webhook_signature(
-    body=request.body,
-    signature_header=request.headers["X-Tesote-Signature"],
-    secret=os.environ["TESOTE_WEBHOOK_SECRET"],
-)
-```
+The platform is poll-based. Use `accounts.sync(...)` (v2) to trigger a refresh, then poll `accounts.get(...)` until the data settles.
 
 ## Versioning
 
-- API versions (`v1`, `v2`, `v3`) ship side-by-side and never get removed.
+- API versions (`v1`, `v2`) ship side-by-side and never get removed.
 - SDK semver is independent. Tag releases as `python-vX.Y.Z`.
 
 See `CHANGELOG.md`.

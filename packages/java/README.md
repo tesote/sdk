@@ -29,10 +29,10 @@ Maven:
 ## Usage
 
 ```java
-import com.tesote.sdk.v3.V3Client;
+import com.tesote.sdk.v2.V2Client;
 import com.fasterxml.jackson.databind.JsonNode;
 
-V3Client client = V3Client.builder()
+V2Client client = V2Client.builder()
     .apiKey(System.getenv("TESOTE_API_KEY"))
     .build();
 
@@ -45,13 +45,12 @@ Versioned clients live side-by-side; consumers pick a version:
 ```java
 import com.tesote.sdk.v1.V1Client;
 import com.tesote.sdk.v2.V2Client;
-import com.tesote.sdk.v3.V3Client;
 ```
 
 ## Configuration
 
 ```java
-V3Client client = V3Client.builder()
+V2Client client = V2Client.builder()
     .apiKey(apiKey)
     .baseUrl("https://equipo-staging.tesote.com/api")
     .userAgent("MyApp/1.0")
@@ -94,8 +93,6 @@ full taxonomy.
 ## Polling model
 
 The platform is poll-based for v1/v2 — there are no server push notifications.
-v3 adds webhooks; webhook signature verification helpers will land in a later
-release.
 
 ## Runtime dependencies
 
@@ -118,7 +115,6 @@ library (`java.net.http.HttpClient`, `java.util.concurrent`).
 ```bash
 cd packages/java
 ./gradlew check
-./gradlew test --tests com.tesote.sdk.v3.AccountsTest
 ```
 
 Wrapper is committed; no system Gradle install required.

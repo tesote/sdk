@@ -15,7 +15,10 @@ adheres to semver per [docs/architecture/release.md](../../docs/architecture/rel
 - Typed exception hierarchy under `Tesote\Sdk\Errors\` covering every
   `error_code` from the API plus transport-level (`NetworkException`,
   `TimeoutException`, `TlsException`).
-- `V1\Client`, `V2\Client`, `V3\Client` exposing per-resource sub-clients.
-- `accounts.list()` and `accounts.get()` wired end-to-end on all three
+- `V1\Client`, `V2\Client` exposing per-resource sub-clients.
+- `accounts.list()` and `accounts.get()` wired end-to-end on both
   versions; remaining resources stubbed via `NotImplemented`.
 - PHPUnit, PHPStan (level 8) and php-cs-fixer dev tooling.
+
+### Removed
+- v3 client surface (will return as a separate release once the upstream OpenAPI is finalized).

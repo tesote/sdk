@@ -25,7 +25,7 @@ import (
     "time"
 
     tesote "github.com/tesote/sdk/go"
-    v3 "github.com/tesote/sdk/go/v3"
+    v2 "github.com/tesote/sdk/go/v2"
 )
 
 func main() {
@@ -35,12 +35,12 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    client := v3.New(tc)
+    client := v2.New(tc)
 
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
 
-    page, err := client.Accounts.List(ctx, v3.ListOptions{PageSize: 50})
+    page, err := client.Accounts.List(ctx, v2.ListOptions{PageSize: 50})
     if err != nil {
         log.Fatal(err)
     }
@@ -52,13 +52,12 @@ func main() {
 
 ## Versioned clients
 
-`v1`, `v2`, `v3` ship side by side. Pick the version your code targets; mix in one process if needed.
+`v1`, `v2` ship side by side. Pick the version your code targets; mix in one process if needed.
 
 ```go
 import (
     v1 "github.com/tesote/sdk/go/v1"
     v2 "github.com/tesote/sdk/go/v2"
-    v3 "github.com/tesote/sdk/go/v3"
 )
 ```
 
@@ -69,7 +68,7 @@ See `docs/architecture/resources.md` in the parent repo for the per-version endp
 Every error implements `error` and either `errors.Is` (sentinel match) or `errors.As` (typed extraction):
 
 ```go
-_, err := client.Accounts.List(ctx, v3.ListOptions{})
+_, err := client.Accounts.List(ctx, v2.ListOptions{})
 if errors.Is(err, tesote.ErrRateLimitExceeded) {
     var rl *tesote.RateLimitExceededError
     errors.As(err, &rl)
@@ -99,7 +98,7 @@ The v1/v2 API is poll-based. Schedule your own ticker; the SDK does not run back
 Pass a `tesote.CacheBackend` (e.g. the built-in `tesote.NewLRUCache`) on the `Options` struct, then opt in per call:
 
 ```go
-client.Accounts.List(ctx, v3.ListOptions{CacheTTL: 30 * time.Second})
+client.Accounts.List(ctx, v2.ListOptions{CacheTTL: 30 * time.Second})
 ```
 
 ## Major-version subpath rule
@@ -110,9 +109,8 @@ Go modules require a `/vN` suffix in the import path for every major version `>=
 |--------------------|-----------------------------------|
 | v0.x.y / v1.x.y    | `github.com/tesote/sdk/go`        |
 | v2.x.y             | `github.com/tesote/sdk/go/v2`     |
-| v3.x.y             | `github.com/tesote/sdk/go/v3`     |
 
-This is independent of the API version sub-packages (`v1/`, `v2/`, `v3/`) you import from any module-version of this SDK.
+This is independent of the API version sub-packages (`v1/`, `v2/`) you import from any module-version of this SDK.
 
 ## Docs
 

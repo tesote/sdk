@@ -4,7 +4,7 @@ Three layers in every language. Cross-language **parity** is a release-blocker â
 
 ## Layer 1 â€” Unit (mocked HTTP)
 
-Where: per-resource files (`ts/test/v3/accounts.test.ts`, `ruby/spec/v3/accounts_spec.rb`, etc.).
+Where: per-resource files (`ts/test/v2/accounts.test.ts`, `ruby/spec/v2/accounts_spec.rb`, etc.).
 
 Asserts:
 - Request shape (method, path, query, headers, body) for every public method.
@@ -56,9 +56,9 @@ Source of canonical lists: `spec/parity.yaml` (hand-maintained for now; codegen 
 
 | Language | Run all                         | Single file |
 |----------|---------------------------------|-------------|
-| TS       | `cd ts && bun test`             | `bun test test/v3/accounts.test.ts` |
-| Python   | `cd python && pytest`           | `pytest tests/v3/test_accounts.py::test_list` |
-| Ruby     | `cd ruby && bundle exec rspec`  | `bundle exec rspec spec/v3/accounts_spec.rb:42` |
-| Java     | `cd java && ./gradlew test`     | `./gradlew test --tests V3AccountsTest.list` |
-| PHP      | `cd php && composer test`       | `vendor/bin/phpunit tests/V3/AccountsTest.php` |
-| Go       | `cd go && go test ./...`        | `go test ./v3 -run TestAccountsList` |
+| TS       | `cd ts && bun test`             | `bun test test/v2/accounts.test.ts` |
+| Python   | `cd python && pytest`           | `pytest tests/v2/test_accounts.py::test_list` |
+| Ruby     | `cd ruby && bundle exec rspec`  | `bundle exec rspec spec/v2/accounts_spec.rb:42` |
+| Java     | `cd java && ./gradlew test`     | `./gradlew test --tests V2AccountsTest.list` |
+| PHP      | `cd php && composer test`       | `vendor/bin/phpunit tests/V2/AccountsTest.php` |
+| Go       | `cd go && go test ./...`        | `go test ./v2 -run TestAccountsList` |

@@ -20,7 +20,7 @@ Customers don't want a wire-protocol SDK pulling in transitive deps that conflic
 | Concern              | Behavior |
 |----------------------|----------|
 | Auth                 | Inject `Authorization: Bearer <api_key>` on every request |
-| Base URL             | Configurable; default `https://equipo.tesote.com/api`; per-version path appended (`/v3/...`) |
+| Base URL             | Configurable; default `https://equipo.tesote.com/api`; per-version path appended (`/v2/...`) |
 | Content negotiation  | `Accept: application/json`; `Content-Type: application/json` on POST/PUT/PATCH |
 | User-Agent           | `tesote-sdk-<lang>/<sdk_version> (<runtime>/<runtime_version>)` — captured at client construction |
 | Request ID           | Surface response `X-Request-Id` to callers and into every thrown error |
@@ -77,7 +77,7 @@ Every mutating endpoint (POST/PUT/PATCH/DELETE) accepts an optional `idempotency
 - Auto-generates UUIDv4 for SDK-driven retries when caller didn't pass one.
 - Caches the in-flight response for ~24h so a retry returns the same result instead of double-creating.
 
-Endpoints mutating without a natural idempotency key (e.g. `POST /v3/accounts/:id/sync`) still accept the header — server dedupes server-side.
+Endpoints mutating without a natural idempotency key (e.g. `POST /v2/accounts/:id/sync`) still accept the header — server dedupes server-side.
 
 ## Pagination
 

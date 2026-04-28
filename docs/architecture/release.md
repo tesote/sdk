@@ -84,7 +84,7 @@ Never echo secrets, never write to logs, never check into the repo.
 
 Strict semver:
 
-- **Major** — back-compat break (per [versioning.md](versioning.md)). Vanishingly rare. New API version (`V4Client`) is **minor**, not major — purely additive.
+- **Major** — back-compat break (per [versioning.md](versioning.md)). Vanishingly rare. New API version (`V3Client`) is **minor**, not major — purely additive.
 - **Minor** — additive: new resources, methods, optional params, error subclasses.
 - **Patch** — bug fixes, internal refactors, doc-only changes.
 

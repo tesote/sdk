@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.email = ['support@tesote.com']
 
   spec.summary = 'Official Ruby SDK for the equipo.tesote.com API.'
-  spec.description = 'Versioned (v1/v2/v3) clients for the Tesote API. Zero runtime dependencies; built on Ruby stdlib net/http.'
+  spec.description = 'Versioned (v1/v2) clients for the Tesote API. Zero runtime dependencies; built on Ruby stdlib net/http.'
   spec.homepage = 'https://github.com/tesote/sdk'
   spec.license = 'MIT'
 

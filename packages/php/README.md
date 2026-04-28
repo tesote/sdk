@@ -2,7 +2,7 @@
 
 Official PHP client SDK for the [equipo.tesote.com](https://equipo.tesote.com) API.
 
-Status: 0.1.0 — unreleased. v3 `accounts.list` / `accounts.get` are wired; everything else is stubbed and throws `LogicException`.
+Status: 0.1.0 — unreleased. v2 `accounts.list` / `accounts.get` are wired; everything else is stubbed and throws `LogicException`.
 
 ## Install
 
@@ -16,7 +16,7 @@ Requires PHP 8.1+, `ext-curl`, `ext-json`. No other runtime dependencies.
 
 ```php
 <?php
-use Tesote\Sdk\V3\Client;
+use Tesote\Sdk\V2\Client;
 
 $client = new Client([
     'apiKey' => getenv('TESOTE_API_KEY'),
@@ -33,15 +33,14 @@ foreach ($accounts['data'] as $account) {
 ```php
 use Tesote\Sdk\V1\Client as V1Client;
 use Tesote\Sdk\V2\Client as V2Client;
-use Tesote\Sdk\V3\Client as V3Client;
 ```
 
-Pick a version explicitly. `V1` / `V2` stay shipped indefinitely.
+Pick a version explicitly. `V1` stays shipped indefinitely.
 
 ## Configuration
 
 ```php
-new V3Client([
+new V2Client([
     'apiKey'           => '...',                           // required
     'baseUrl'          => 'https://equipo.tesote.com/api', // default
     'userAgent'        => 'tesote-sdk-php/0.1.0 (php/8.x)', // override for Odoo/SAP connectors
@@ -72,7 +71,7 @@ Every exception carries `errorCode`, `httpStatus`, `requestId`, `errorId`, `retr
 
 ## Polling model
 
-The platform is poll-based for v1/v2. Don't tight-loop — the SDK will surface `RateLimitExceededException` after retries. v3 adds webhooks (signature-verification helper coming soon).
+The platform is poll-based for v1/v2. Don't tight-loop — the SDK will surface `RateLimitExceededException` after retries.
 
 ## Tests
 

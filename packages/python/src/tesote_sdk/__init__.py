@@ -1,7 +1,6 @@
 """Public API for the Tesote Python SDK.
 
-Re-exports the three versioned clients, every error class, and the v3
-``verify_webhook_signature`` helper.
+Re-exports the versioned clients and every error class.
 """
 
 from ._version import __version__
@@ -27,14 +26,11 @@ from .errors import (
 )
 from .v1 import V1Client
 from .v2 import V2Client
-from .v3 import V3Client, verify_webhook_signature
 
 __all__ = [
     "__version__",
     "V1Client",
     "V2Client",
-    "V3Client",
-    "verify_webhook_signature",
     # error hierarchy
     "TesoteError",
     "ConfigError",

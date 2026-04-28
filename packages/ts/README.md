@@ -13,9 +13,9 @@ npm install @tesote/sdk
 ## Quick start
 
 ```ts
-import { V3Client } from '@tesote/sdk';
+import { V2Client } from '@tesote/sdk';
 
-const client = new V3Client({ apiKey: process.env.TESOTE_API_KEY! });
+const client = new V2Client({ apiKey: process.env.TESOTE_API_KEY! });
 
 const accounts = await client.accounts.list();
 const acct = await client.accounts.get('acct_123');
@@ -27,7 +27,7 @@ console.log(client.lastRateLimit);
 V1 and V2 clients ship side-by-side and are picked explicitly:
 
 ```ts
-import { V1Client, V2Client, V3Client } from '@tesote/sdk';
+import { V1Client, V2Client } from '@tesote/sdk';
 ```
 
 ## Errors

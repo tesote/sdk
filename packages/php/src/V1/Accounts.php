@@ -9,7 +9,7 @@ use Tesote\Sdk\Transport;
 /**
  * v1 accounts: read-only listing and lookup.
  *
- * Other v2/v3 mutations (sync) are not part of v1.
+ * Other v2 mutations (sync) are not part of v1.
  */
 final class Accounts
 {

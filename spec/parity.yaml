@@ -34,41 +34,6 @@ versions:
       payment_methods:
         methods: [list, get, create, update, delete]
 
-  v3:
-    resources:
-      status:
-        methods: [status, whoami]
-      accounts:
-        methods: [list, get, sync]
-      transactions:
-        methods: [listForAccount, get, export, sync, bulk, search]
-      sync_sessions:
-        methods: [list, get]
-      transaction_orders:
-        methods: [list, get, create, submit, cancel]
-      batches:
-        methods: [create, get, approve, submit, cancel]
-      payment_methods:
-        methods: [list, get, create, update, delete]
-      balance_history:
-        methods: [listForAccount]
-      categories:
-        methods: [list, get, create, update, delete]
-      counterparties:
-        methods: [list, get, create, update, delete]
-      legal_entities:
-        methods: [list, get]
-      connections:
-        methods: [list, get, status]
-      webhooks:
-        methods: [list, get, create, update, delete]
-      reports:
-        methods: [cashFlow]
-      workspace:
-        methods: [get]
-      mcp:
-        methods: [handle]
-
 # Typed errors. `class` is the canonical class name (TS/Python/Ruby).
 # Java/PHP append `Exception` instead of `Error`; Go uses `Err<Name>` sentinels
 # alongside `*<Name>Error` types — the parity script checks per-language naming.
