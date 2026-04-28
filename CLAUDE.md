@@ -20,7 +20,14 @@ Languages shipped from here. Repo-level name is `tesote-sdk`; the npm package us
 Two axes, don't conflate them:
 
 - **Min runtime version** (above): conservative, set the floor low so the SDK works on widely-deployed runtimes. No syntax/features younger than the floor. No experimental features. No clever tricks.
-- **Dependencies + tooling**: pin to **latest stable**. `httpx`, `faraday`, `guzzle`, `jackson`, `vitest`, `pytest`, `rspec`, `junit-jupiter`, `phpunit`, etc. — newest released version at scaffold time. GitHub Actions: latest major (`actions/checkout@v4`, `actions/setup-node@v4`, `actions/setup-python@v5`, etc.). Test the SDK on a matrix that includes the latest LTS *and* the current stable for that language.
+- **Runtime deps: target zero.** Use the standard library for HTTP, JSON, retries, caching. Carrying a transitive dep into a customer's app risks version conflicts we don't control.
+  - TS: native `fetch` (Node 18+). No axios/got/undici.
+  - Python: stdlib `urllib.request` + `json`. No httpx/requests.
+  - Ruby: stdlib `net/http` + `json`. No Faraday.
+  - Java: stdlib `java.net.http.HttpClient`. JSON: minimal — accept `jackson-databind` if stdlib alternatives are too awkward, but explore `jakarta.json` first.
+  - PHP: ext-curl + `json_*`. No Guzzle.
+  - Go: stdlib `net/http` + `encoding/json`.
+- **Dev/test/build deps**: latest stable, but **pinned loosely** (`^x.y`, `~> x.y`, etc. — not `=x.y.z`). GitHub Actions: latest major (`actions/checkout@v4`, `actions/setup-node@v4`, etc.). Test matrix: min-version floor + latest LTS + current stable.
 
 Each language is independently versioned, released, and tested. No cross-language code sharing — duplicate idiomatically rather than abstract.
 
