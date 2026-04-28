@@ -75,8 +75,11 @@ jobs:
         name: build gem
         run: gem build tesote-sdk.gemspec
       - if: steps.gate.outputs.release == 'true'
-        name: publish to RubyGems (OIDC trusted publisher)
-        uses: rubygems/release-gem@v1
+        name: configure RubyGems OIDC credentials
+        uses: rubygems/configure-rubygems-credentials@v1
+      - if: steps.gate.outputs.release == 'true'
+        name: publish gem
+        run: gem push "tesote-sdk-${{ steps.gate.outputs.version }}.gem"
       - if: steps.gate.outputs.release == 'true'
         name: tag and GitHub release
         env:
