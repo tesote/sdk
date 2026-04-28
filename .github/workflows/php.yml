@@ -85,9 +85,16 @@ jobs:
           # why: Packagist publishes via the GitHub webhook on tag push — no
           # token in this workflow. One-time setup: register the package at
           # packagist.org and add the GitHub webhook.
+          # Composer only parses semver-ish tags (vX.Y.Z), so we also push a
+          # plain `vX.Y.Z` next to the cross-language `php-vX.Y.Z` so
+          # Packagist indexes the release. The two tags point at the same
+          # commit; the GitHub Release is anchored to the language-prefixed
+          # one.
           tag="${{ steps.gate.outputs.tag }}"
+          composer_tag="v${{ steps.gate.outputs.version }}"
           git tag "$tag"
-          git push origin "$tag"
+          git tag "$composer_tag"
+          git push origin "$tag" "$composer_tag"
           gh release create "$tag" \
             --title "$tag" \
             --generate-notes
