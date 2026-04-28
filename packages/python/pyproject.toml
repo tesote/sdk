@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tesote-sdk"
+version = "0.1.0"
+description = "Official Python SDK for the equipo.tesote.com API."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Tesote" }]
+keywords = ["tesote", "sdk", "api", "banking"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest", "mypy", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/tesote/sdk"
+Issues = "https://github.com/tesote/sdk/issues"
+Documentation = "https://www.tesote.com/docs/sdk"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tesote_sdk"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/tesote_sdk", "README.md", "CHANGELOG.md", "pyproject.toml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C90"]
+ignore = [
+  # why: target Python 3.9 -- no PEP 604 unions, no PEP 585 builtin generics
+  "UP006",
+  "UP007",
+  "UP035",
+  "UP045",
+  "UP046",
+  "UP047",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+files = ["src"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"

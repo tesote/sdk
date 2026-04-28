@@ -13,17 +13,14 @@ Repo name: `tesote-sdk`. npm uses scoped `@tesote/sdk`; other registries use `te
 | PHP        | `packages/php/`    | `tesote/sdk`               | PHP 8.1     | Packagist        |
 | Go         | `packages/go/`     | `github.com/tesote/sdk/go` | Go 1.21     | proxy.golang.org |
 
-## Two version axes
+## Versions & deps
 
-- **Min runtime version** (above): conservative floor. No syntax/features younger than the floor. No experimental features.
-- **Runtime deps: zero.** Stdlib only for HTTP, JSON, retries, caching. Per language: TS native `fetch`, Python `urllib.request` + `json`, Ruby `Net::HTTP` + `json`, Java `java.net.http.HttpClient` (`jackson-databind` allowed if `jakarta.json` is too awkward — only acceptable runtime dep), PHP ext-curl + `json_*`, Go `net/http` + `encoding/json`.
+- **Min runtime** (table above): conservative floor. No features/syntax younger than the floor. No experimental.
+- **Runtime deps: zero.** Stdlib only for HTTP, JSON, retries, caching. TS `fetch`, Python `urllib.request`+`json`, Ruby `Net::HTTP`+`json`, Java `java.net.http.HttpClient` (`jackson-databind` allowed if `jakarta.json` too awkward — only acceptable runtime dep), PHP ext-curl+`json_*`, Go `net/http`+`encoding/json`.
 - **Dev/test/build deps**: latest stable, loose pins (`^x.y`, `~> x.y` — never `=x.y.z`). Actions: latest major (`actions/checkout@v4`). Test matrix: floor + latest LTS + current stable.
-
-Each language is independently versioned, released, tested. No cross-language code sharing — duplicate idiomatically.
-
-**Per-language semver**: patch is per-language only; minor and major land across all six in lockstep, gated by `parity-check.yml`.
-
-**Initial releases ship as `0.1.x`.** Pre-1.0 — the SDK surface may evolve based on early-adopter feedback before we lock back-compat guarantees. `1.0.0` lands when the v3 OpenAPI is finalized upstream and we've shipped 0.1.x stable for at least one cycle.
+- Each language independently versioned, released, tested. No cross-language code sharing — duplicate idiomatically.
+- **Semver**: patch is per-language only; minor and major land across all six in lockstep, gated by `parity-check.yml`.
+- **Initial releases ship as `0.1.x`.** Pre-1.0 — surface may evolve from early-adopter feedback. `1.0.0` lands when the v3 OpenAPI is finalized upstream and 0.1.x has shipped stable for one cycle.
 
 ## API source of truth
 
@@ -35,61 +32,31 @@ Upstream OpenAPI lives in the platform repo (sibling dir, vendor a snapshot — 
 
 Expose only **client-facing, API-key-authenticated** endpoints (mounted under `TesoteApi::Engine` with `current_api_key` auth). No internal admin/session-cookie controllers.
 
-## SDK shape (all languages)
+## SDK shape
 
-Versioned clients side-by-side; consumers pick a version explicitly.
-
-```ts
-import { V1Client, V2Client, V3Client } from '@tesote/sdk'
-```
-
-```python
-from tesote_sdk import V1Client, V2Client, V3Client
-```
-
-```ruby
-require 'tesote_sdk'
-TesoteSdk::V2::Client.new(api_key: ...)
-```
-
-```go
-import "github.com/tesote/sdk/go/v3"
-```
-
-**Back-compat is permanent.** v1 and v2 stay shipped after v3 lands. Removing or renaming a public symbol in any version = breaking change. Don't.
-
-### Modular layout
+Versioned clients side-by-side; consumer picks (`V1Client`, `V2Client`, `V3Client`). Per-language signatures in [versioning.md](docs/architecture/versioning.md). **Back-compat is permanent.** v1 and v2 stay shipped after v3 lands. Removing or renaming a public symbol in any version = breaking. Don't.
 
 One module/file per resource (accounts, transactions, sync_sessions, transaction_orders, batches, payment_methods, categories, counterparties, legal_entities, connections, webhooks, reports, balance_history, workspace). SOLID/SRP:
 
 - Transport layer separate from resource clients (one HTTP client, swappable for tests).
-- Resource clients are thin: marshal params → call transport → deserialize.
+- Resource clients thin: marshal params → call transport → deserialize **into typed model objects, not raw maps/hashes/dicts**. Per language: TS classes/interfaces, Python `@dataclass`, Ruby PORO classes (or `Struct`), Java records, PHP readonly classes with typed properties, Go structs. Field names match the API casing in the docs but follow each language's idiomatic casing in the public model (snake_case preserved on the wire, camelCase/PascalCase on the model where idiomatic).
 - Errors typed (one class per `error_code`).
-- **Transport owns cross-cutting concerns**: pagination, retry (exponential backoff + jitter), rate-limit awareness, response caching (ETag / `Cache-Control` / opt-in TTL), idempotency keys for mutations, request-id propagation. Resource clients never reimplement.
+- **Transport owns cross-cutting**: pagination, retry (exponential backoff + jitter), rate-limit awareness, response caching (ETag / `Cache-Control` / opt-in TTL), idempotency keys for mutations, request-id propagation. Resource clients never reimplement.
 
 ### Error payload (every error class)
 
-- `error_code` (string, from API envelope)
-- `message` (human-readable, from API or synthesized)
-- `http_status` (int)
-- `request_id` (from `X-Request-Id`)
-- `retry_after` (int seconds, when present)
-- `response_body` (raw)
-- `request_summary` (method + path + redacted query/body — never the bearer token)
+`error_code` · `message` · `http_status` · `request_id` (from `X-Request-Id`) · `retry_after` · `response_body` · `request_summary` (method + path + redacted query/body — never the bearer token).
 
-One class per `error_code` (full table in `docs/architecture/errors.md`). Don't collapse into a single `ApiError`. Transport-level failures get typed classes (`NetworkError`, `TimeoutError`) — never bubble up the underlying language exception.
+One class per `error_code` (full table in [errors.md](docs/architecture/errors.md)). Don't collapse into a single `ApiError`. Transport-level failures get typed classes (`NetworkError`, `TimeoutError`) — never bubble up the underlying language exception.
 
 ## API contract
 
 - **Auth**: `Authorization: Bearer <api_key>`. No other schemes.
 - **Rate limits**: 200 req/min per API key, 400 req/min per IP. Headers: `X-RateLimit-{Limit,Remaining,Reset}`. On 429: `Retry-After`. Retry with backoff to a configurable cap → `RateLimitExceededError`.
-- **Error envelope**: `{ "error": "...", "error_code": "...", "error_id": "uuid?", "retry_after": 60 }`. Map every `error_code` to a typed exception (table in `docs/architecture/errors.md`).
+- **Error envelope**: `{ "error": "...", "error_code": "...", "error_id": "uuid?", "retry_after": 60 }`. Map every `error_code` to a typed exception.
 - **`X-Request-Id`** on every response — attach to thrown errors; accept a logger callback.
 - **`Content-Type: application/json`** required on POST/PUT/PATCH (415 otherwise).
-
-### Polling model
-
-v1/v2 are poll-based, not push. Document in each SDK's README with example code mirroring the OpenAPI's "Implementation Checklist". v3 adds webhooks — signature-verification helpers ship in the SDK.
+- **Polling**: v1/v2 are poll-based, not push. Document in each SDK's README with example code mirroring the OpenAPI's "Implementation Checklist". v3 adds webhooks — signature-verification helpers ship in the SDK.
 
 ## Tests
 
@@ -106,11 +73,11 @@ Runners: **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`). One wor
 2. **`test`** — unit + integration replay. Matrix across supported versions.
 3. **`release`** — `if: startsWith(github.ref, 'refs/tags/<lang>-v')`. Verify tag = manifest version, build, publish, GitHub Release.
 
-Tags per-language so SDKs version independently. Trusted publishers (OIDC) for npm/RubyGems/PyPI; Sonatype Central Portal user token for Maven; `PACKAGIST_TOKEN` for PHP; Go publishes via tag push (no token). See `docs/architecture/release.md`.
+Tags per-language so SDKs version independently. OIDC trusted publishers for npm/RubyGems/PyPI; Sonatype Central Portal user token for Maven; `PACKAGIST_TOKEN` for PHP; Go publishes via tag push (no token). See [release.md](docs/architecture/release.md).
 
 ## Documentation
 
-End-user usage docs + API reference live at `../tesote.com` — link from each SDK's README; do not duplicate. Public-surface PRs update the matching doc page in that repo, same PR.
+End-user docs + API reference live at `../tesote.com` (`www.tesote.com/docs/sdk`) — link from each SDK's README; do not duplicate. Public-surface PRs update the matching doc page in that repo, same PR. End-user README: [`README.md`](README.md).
 
 ## Deep dives — `docs/architecture/`
 
@@ -121,8 +88,6 @@ End-user usage docs + API reference live at `../tesote.com` — link from each S
 - [auth.md](docs/architecture/auth.md) — bearer-token rules
 - [testing.md](docs/architecture/testing.md) — unit / replay / smoke layers
 - [release.md](docs/architecture/release.md) — Blacksmith CI, tag-driven releases, OIDC
-
-End-user README: [`README.md`](README.md). End-user docs: `www.tesote.com/docs/sdk`.
 
 ## Style
 

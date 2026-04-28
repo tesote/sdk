@@ -1,0 +1,105 @@
+name: python
+
+on:
+  push:
+    branches: [main]
+    tags: ['python-v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    outputs:
+      should_run: ${{ steps.filter.outputs.python }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            python:
+              - 'packages/python/**'
+              - 'spec/**'
+
+  test:
+    needs: detect
+    if: needs.detect.outputs.should_run == 'true' || startsWith(github.ref, 'refs/tags/python-v')
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    defaults:
+      run:
+        working-directory: packages/python
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + dev tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test]
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Type-check (mypy --strict)
+        run: mypy src
+
+      - name: Test (pytest)
+        run: pytest
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/python-v')
+    needs: test
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    permissions:
+      id-token: write
+      contents: write
+    defaults:
+      run:
+        working-directory: packages/python
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Verify tag matches package version
+        run: |
+          tag="${GITHUB_REF#refs/tags/python-v}"
+          pkg=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag version ($tag) does not match pyproject version ($pkg)" >&2
+            exit 1
+          fi
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Publish to PyPI (trusted publisher OIDC)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/python/dist
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" \
+            --title "$tag" \
+            --generate-notes \
+            packages/python/dist/*
