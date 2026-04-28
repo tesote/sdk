@@ -1,0 +1,18 @@
+# OS / editor
+.DS_Store
+*.swp
+
+# Per-language gitignores live in <lang>/.gitignore — keep this root file minimal
+
+# IDE
+.idea/
+.vscode/
+
+# Local agent config (never commit)
+.claude/
+.claude-task-master/
+
+# Env
+.env
+.env.local
+.env.*.local
