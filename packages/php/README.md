@@ -83,4 +83,4 @@ vendor/bin/phpunit
 
 ## Docs
 
-End-user docs live at https://www.tesote.com/docs/php.
+End-user docs live at https://www.tesote.com/docs/sdk/php.

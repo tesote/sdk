@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Official Ruby SDK for the equipo.tesote.com API.'
   spec.description = 'Versioned (v1/v2) clients for the Tesote API. Zero runtime dependencies; built on Ruby stdlib net/http.'
-  spec.homepage = 'https://www.tesote.com/docs/ruby'
+  spec.homepage = 'https://www.tesote.com/docs/sdk/ruby'
   spec.license = 'MIT'
 
   spec.required_ruby_version = '>= 3.0'
@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/tesote/sdk/tree/main/packages/ruby'
   spec.metadata['changelog_uri'] = 'https://github.com/tesote/sdk/blob/main/packages/ruby/CHANGELOG.md'
-  spec.metadata['documentation_uri'] = 'https://www.tesote.com/docs/ruby'
+  spec.metadata['documentation_uri'] = 'https://www.tesote.com/docs/sdk/ruby'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.files = Dir.glob('lib/**/*.rb') + ['README.md', 'CHANGELOG.md', 'tesote-sdk.gemspec']

@@ -3,7 +3,7 @@
     "description": "Official PHP client SDK for the equipo.tesote.com API.",
     "type": "library",
     "license": "MIT",
-    "homepage": "https://www.tesote.com/docs/php",
+    "homepage": "https://www.tesote.com/docs/sdk/php",
     "keywords": ["tesote", "sdk", "api", "banking", "payments"],
     "require": {
         "php": "^8.1",
@@ -17,19 +17,19 @@
     },
     "autoload": {
         "psr-4": {
-            "Tesote\\Sdk\\": "src/"
+            "Tesote\\Sdk\\": "packages/php/src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Tesote\\Sdk\\Tests\\": "tests/"
+            "Tesote\\Sdk\\Tests\\": "packages/php/tests/"
         }
     },
     "scripts": {
-        "test": "phpunit",
-        "phpstan": "phpstan analyse --memory-limit=512M",
-        "cs-check": "php-cs-fixer fix --dry-run --diff",
-        "cs-fix": "php-cs-fixer fix"
+        "test": "phpunit -c packages/php/phpunit.xml.dist",
+        "phpstan": "phpstan analyse -c packages/php/phpstan.neon --memory-limit=512M",
+        "cs-check": "php-cs-fixer fix --config=packages/php/.php-cs-fixer.dist.php --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix --config=packages/php/.php-cs-fixer.dist.php"
     },
     "config": {
         "sort-packages": true,

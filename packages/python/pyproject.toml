@@ -30,10 +30,10 @@ dependencies = []
 test = ["pytest", "mypy", "ruff"]
 
 [project.urls]
-Homepage = "https://www.tesote.com/docs/python"
+Homepage = "https://www.tesote.com/docs/sdk/python"
 Repository = "https://github.com/tesote/sdk"
 Issues = "https://github.com/tesote/sdk/issues"
-Documentation = "https://www.tesote.com/docs/python"
+Documentation = "https://www.tesote.com/docs/sdk/python"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tesote_sdk"]

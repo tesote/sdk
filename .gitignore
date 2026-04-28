@@ -16,3 +16,9 @@
 .env
 .env.local
 .env.*.local
+
+# Composer (root manifest is for Packagist; vendor/ + lock are dev artifacts)
+/vendor/
+/composer.lock
+/.phpunit.cache/
+/.php-cs-fixer.cache

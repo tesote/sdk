@@ -1,19 +1,22 @@
 name: php
 
-# why: PHP version source is packages/php/VERSION (single line). Packagist
-# pulls from git tags via webhook — the release job creates the tag, and
-# Packagist indexes it.
+# why: composer.json lives at the repo root for Packagist; the PHP source
+# stays in packages/php/. Tests/lint run from root via composer scripts.
+# PHP version source is packages/php/VERSION; Packagist indexes new tags
+# via the GitHub webhook, so the release job just creates the tag.
 
 on:
   push:
     branches: [main]
     paths:
+      - 'composer.json'
       - 'packages/php/**'
       - 'spec/**'
       - '.github/workflows/php.yml'
   pull_request:
     branches: [main]
     paths:
+      - 'composer.json'
       - 'packages/php/**'
       - 'spec/**'
       - '.github/workflows/php.yml'
@@ -41,17 +44,13 @@ jobs:
           coverage: none
           tools: composer:v2
       - name: composer install
-        working-directory: packages/php
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: php-cs-fixer (dry-run)
-        working-directory: packages/php
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        run: composer cs-check
       - name: phpstan
-        working-directory: packages/php
-        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+        run: composer phpstan -- --no-progress
       - name: phpunit
-        working-directory: packages/php
-        run: vendor/bin/phpunit --colors=never
+        run: composer test -- --colors=never
 
   release:
     needs: test
@@ -63,16 +62,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: gate on version
         id: gate
-        working-directory: packages/php
         run: |
           set -euo pipefail
-          version="$(tr -d '[:space:]' < VERSION)"
+          version="$(tr -d '[:space:]' < packages/php/VERSION)"
           tag="php-v$version"
           release=true
-          if git -C "$GITHUB_WORKSPACE" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
             echo "tag $tag already exists; skipping release."
             release=false
-          elif grep -qE "^## ${version} - unreleased" CHANGELOG.md; then
+          elif grep -qE "^## ${version} - unreleased" packages/php/CHANGELOG.md; then
             echo "CHANGELOG marks ${version} as unreleased; skipping publish."
             release=false
           fi

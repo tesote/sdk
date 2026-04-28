@@ -1,0 +1,26 @@
+# why: composer.json lives at repo root for Packagist, but the dist archive
+# only needs the PHP package + license/readme. Exclude every non-PHP
+# language folder, the non-PHP docs, CI internals, and dotfiles from the
+# tarball that ends up in user vendor/ directories.
+
+/.coderabbit.yaml       export-ignore
+/.gitattributes         export-ignore
+/.github                export-ignore
+/.gitignore             export-ignore
+/.idea                  export-ignore
+/CLAUDE.md              export-ignore
+/bin                    export-ignore
+/docs                   export-ignore
+/packages/go            export-ignore
+/packages/java          export-ignore
+/packages/python        export-ignore
+/packages/ruby          export-ignore
+/packages/ts            export-ignore
+/spec                   export-ignore
+
+# PHP package internals not needed in the runtime archive
+/packages/php/CHANGELOG.md       -export-ignore
+/packages/php/tests              export-ignore
+/packages/php/phpunit.xml.dist   export-ignore
+/packages/php/phpstan.neon       export-ignore
+/packages/php/.php-cs-fixer.dist.php export-ignore

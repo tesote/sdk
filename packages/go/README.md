@@ -114,4 +114,4 @@ This is independent of the API version sub-packages (`v1/`, `v2/`) you import fr
 
 ## Docs
 
-End-user docs: [www.tesote.com/docs/go](https://www.tesote.com/docs/go).
+End-user docs: [www.tesote.com/docs/sdk/go](https://www.tesote.com/docs/sdk/go).
