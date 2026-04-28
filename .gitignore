@@ -12,6 +12,9 @@
 .claude/
 .claude-task-master/
 
+# Local-only scratch dir for secrets bundles, etc — never commit
+/tmp/
+
 # Env
 .env
 .env.local
