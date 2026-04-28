@@ -4,7 +4,7 @@ All notable changes to the `com.tesote:sdk` artifact are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.1.0 - unreleased
+## 0.1.0 - 2026-04-28
 
 Initial bootstrap.
 

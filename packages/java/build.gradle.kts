@@ -2,7 +2,7 @@ plugins {
     `java-library`
     `maven-publish`
     signing
-    id("com.gradleup.nmcp") version "0.0.9"
+    id("com.gradleup.nmcp") version "0.1.0"
 }
 
 group = "com.tesote"
@@ -72,7 +72,7 @@ publishing {
                     developer {
                         id.set("tesote")
                         name.set("Tesote")
-                        email.set("dev@tesote.com")
+                        email.set("dev.admin@tesote.com")
                     }
                 }
                 scm {
@@ -95,7 +95,10 @@ signing {
 }
 
 nmcp {
-    publish("maven") {
+    // why: 0.1.0 dropped publish("name") in favor of the wrapper below;
+    // task is `publishAllPublicationsToCentralPortal`. AUTOMATIC publication
+    // type tells the Central Portal to release as soon as validation passes.
+    publishAllPublicationsToCentralPortal {
         username.set(providers.environmentVariable("MAVEN_CENTRAL_USERNAME"))
         password.set(providers.environmentVariable("MAVEN_CENTRAL_PASSWORD"))
         publicationType.set("AUTOMATIC")
