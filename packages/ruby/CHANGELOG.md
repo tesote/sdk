@@ -4,7 +4,7 @@ All notable changes to `tesote-sdk` (Ruby) are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is
 [SemVer](https://semver.org/) per the SDK's back-compat policy.
 
-## 0.1.0 - unreleased
+## 0.1.0 - 2026-04-28
 
 ### Added
 
