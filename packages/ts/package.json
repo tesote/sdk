@@ -1,0 +1,72 @@
+{
+  "name": "@tesote/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the Tesote API (equipo.tesote.com).",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./v1": {
+      "types": "./dist/v1/index.d.ts",
+      "import": "./dist/v1/index.js",
+      "require": "./dist/v1/index.cjs"
+    },
+    "./v2": {
+      "types": "./dist/v2/index.d.ts",
+      "import": "./dist/v2/index.js",
+      "require": "./dist/v2/index.cjs"
+    },
+    "./v3": {
+      "types": "./dist/v3/index.d.ts",
+      "import": "./dist/v3/index.js",
+      "require": "./dist/v3/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test",
+    "lint:fix": "biome check --write src test",
+    "format": "biome format --write src test",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "tesote",
+    "sdk",
+    "api",
+    "fintech"
+  ],
+  "license": "MIT",
+  "homepage": "https://www.tesote.com/docs/sdk/ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tesote/sdk.git",
+    "directory": "packages/ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9",
+    "@types/node": "^22.0",
+    "tsup": "^8.3",
+    "typescript": "^5.6",
+    "vitest": "^2.1"
+  }
+}
