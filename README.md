@@ -36,12 +36,16 @@ Full docs: **https://www.tesote.com/docs/sdk**
 
 ## Quick start
 
+**TypeScript** ([`@tesote.com/sdk`](https://www.npmjs.com/package/@tesote.com/sdk))
+
 ```ts
 import { V2Client } from '@tesote.com/sdk'
 
 const tesote = new V2Client({ apiKey: process.env.TESOTE_API_KEY! })
 const accounts = await tesote.accounts.list()
 ```
+
+**Python** ([`tesote-sdk`](https://pypi.org/project/tesote-sdk/))
 
 ```python
 from tesote_sdk import V2Client
@@ -51,12 +55,16 @@ for account in tesote.accounts.list_all():
     print(account.id, account.balance)
 ```
 
+**Ruby** ([`tesote-sdk`](https://rubygems.org/gems/tesote-sdk))
+
 ```ruby
 require 'tesote_sdk'
 
 tesote = TesoteSdk::V2::Client.new(api_key: ENV.fetch('TESOTE_API_KEY'))
 tesote.accounts.list.each { |a| puts a.id }
 ```
+
+**Go** ([`github.com/tesote/sdk/go`](https://pkg.go.dev/github.com/tesote/sdk/go))
 
 ```go
 import tesote "github.com/tesote/sdk/go/v2"
@@ -65,12 +73,16 @@ c := tesote.New(tesote.Config{APIKey: os.Getenv("TESOTE_API_KEY")})
 accounts, _ := c.Accounts.List(ctx, nil)
 ```
 
+**PHP** ([`tesote/sdk`](https://packagist.org/packages/tesote/sdk))
+
 ```php
 use Tesote\Sdk\V2\Client;
 
 $tesote = new Client(['apiKey' => getenv('TESOTE_API_KEY')]);
 $accounts = $tesote->accounts->list();
 ```
+
+**Java** ([`com.tesote:sdk`](https://central.sonatype.com/artifact/com.tesote/sdk))
 
 ```java
 import com.tesote.sdk.v2.V2Client;
