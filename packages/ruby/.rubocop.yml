@@ -1,0 +1,82 @@
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'pkg/**/*'
+
+# why: tests are wide on purpose
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - '*.gemspec'
+    - 'Rakefile'
+
+Metrics/ClassLength:
+  Max: 320
+
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/AbcSize:
+  Max: 35
+
+Metrics/ParameterLists:
+  Max: 14
+  MaxOptionalParameters: 14
+
+Metrics/CyclomaticComplexity:
+  Max: 12
+
+Metrics/PerceivedComplexity:
+  Max: 12
+
+Layout/LineLength:
+  Max: 140
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/SafeNavigation:
+  Enabled: false
+
+# Forbid catch-all rescues. The architecture docs require typed rescues only.
+Style/RescueStandardError:
+  Enabled: true
+  EnforcedStyle: explicit
+
+Lint/RescueException:
+  Enabled: true
+
+Lint/SuppressedException:
+  AllowComments: true
+
+Naming/AccessorMethodName:
+  Enabled: false
+
+Naming/MethodParameterName:
+  AllowedNames:
+    - a
+    - b
+    - id
+
+# Dev deps live in the gemspec by design — keeps `gem build`, RubyGems metadata,
+# and the Gemfile (which `gemspec`s in) in agreement.
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+# Spec helper assertions read better with a trailing details block.
+Style/MultilineBlockChain:
+  Exclude:
+    - 'spec/**/*'

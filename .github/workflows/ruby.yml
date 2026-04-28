@@ -1,0 +1,91 @@
+name: ruby
+
+on:
+  push:
+    branches: [main]
+    tags: ['ruby-v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    outputs:
+      should_run: ${{ steps.filter.outputs.ruby }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            ruby:
+              - 'packages/ruby/**'
+              - 'spec/**'
+
+  test:
+    needs: detect
+    if: needs.detect.outputs.should_run == 'true' || startsWith(github.ref, 'refs/tags/ruby-v')
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ['3.0', '3.1', '3.2', '3.3', '3.4']
+    defaults:
+      run:
+        working-directory: packages/ruby
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          working-directory: packages/ruby
+      - name: rubocop
+        run: bundle exec rubocop
+      - name: rspec
+        run: bundle exec rspec
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/ruby-v')
+    needs: test
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    permissions:
+      contents: write
+      id-token: write
+    defaults:
+      run:
+        working-directory: packages/ruby
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: packages/ruby
+      - name: bundle install
+        run: bundle install
+      - name: verify tag matches gem version
+        run: |
+          tag="${GITHUB_REF##refs/tags/ruby-v}"
+          gem_version=$(ruby -r ./lib/tesote_sdk/version.rb -e 'print TesoteSdk::VERSION')
+          if [ "$tag" != "$gem_version" ]; then
+            echo "tag $tag != gem version $gem_version" >&2
+            exit 1
+          fi
+      - name: build gem
+        run: gem build tesote-sdk.gemspec
+      - name: publish to RubyGems via trusted publisher (OIDC)
+        uses: rubygems/release-gem@v1
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF##refs/tags/}"
+          gh release create "$tag" \
+            --title "$tag" \
+            --generate-notes \
+            packages/ruby/tesote-sdk-*.gem
+        working-directory: ${{ github.workspace }}
