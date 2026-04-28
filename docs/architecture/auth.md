@@ -23,6 +23,17 @@ Per-language env-var read:
 - PHP: `getenv('TESOTE_SDK_API_KEY')`
 - Go: `os.Getenv("TESOTE_SDK_API_KEY")`
 
+## Base URL
+
+Same pattern as the API key — explicit arg overrides env, env overrides default.
+
+```ts
+new V3Client({ apiKey: '...', baseUrl: 'https://equipo-staging.tesote.com/api' })  // explicit
+new V3Client()  // baseUrl from TESOTE_SDK_API_URL, then default https://equipo.tesote.com/api
+```
+
+Env var: `TESOTE_SDK_API_URL`. Default: `https://equipo.tesote.com/api`. Trailing slash stripped at construction. Invalid URL → `ConfigError`.
+
 ## Key types
 
 Platform tags API keys with `access_type` (`general`, `odoo`, `sap`). Specialized keys require matching `User-Agent` substrings (`TesoteOdooConnector`, `TesoteSapConnector`). General keys must **not** carry those substrings.

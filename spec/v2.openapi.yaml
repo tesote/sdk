@@ -1,0 +1,1634 @@
+# Vendored from upstream — do not edit by hand.
+# Source: engines/tesote_api/docs/openapi_v2.yaml
+# Upstream repo: tesote/treasury
+# Upstream commit: f28eeb2be39895cb1e8ff45a6b9cad3706c7491f
+# Refresh: see spec/README.md
+openapi: 3.1.0
+info:
+  title: Tesote API
+  description: |
+    # Welcome to the Tesote API v2.0.0 🚀
+
+    The next generation Tesote API provides enhanced security, improved performance, and advanced features for financial data integration. Built for modern applications that demand real-time data synchronization and enterprise-grade reliability.
+
+    ## What's New in v2.0.0
+    - **Enhanced Cursor Pagination**: Improved cursor-based pagination for all endpoints
+    - **Real-time Sync Endpoints**: New `/sync` endpoints for real-time data synchronization
+    - **Webhook Support**: Built-in webhook notifications for account and transaction changes
+    - **Advanced Filtering**: More powerful filtering and search capabilities
+    - **Improved Error Handling**: Better error responses with detailed error codes
+    - **Performance Optimizations**: Faster response times and reduced payload sizes
+
+    ## Key Features
+    - **Secure Authentication**: Enhanced JWT-based authentication with API key management
+    - **Real-time Data**: Live data synchronization with webhook notifications
+    - **Comprehensive Coverage**: Support for 50+ financial institutions and all account types
+    - **Developer-Friendly**: OpenAPI 3.1 specification with comprehensive examples
+    - **Enterprise Ready**: Built for scale with advanced rate limiting and monitoring
+    - **Backward Compatible**: Smooth migration path from v1.0.0
+
+    ## Rate Limiting (Enhanced)
+    The v2.0.0 API implements enhanced rate limiting:
+    - **Standard Tier**: 200 requests per minute per IP address
+    - **Premium Tier**: 500 requests per minute per IP address  
+    - **Enterprise Tier**: 1000 requests per minute per IP address
+    - **Window**: 60-second rolling window with burst allowance
+    - **Response**: `429 Too Many Requests` with detailed retry information
+    - **Headers**: Enhanced rate limit headers including remaining quota and reset time
+
+    ## Transaction Lifecycle: Pending vs Completed 💳
+    
+    Understanding the transaction lifecycle is crucial for building robust financial applications with Tesote API v2.0.0.
+    
+    ### Transaction States
+    There are two primary transaction states in the Tesote system:
+    - **Pending**: Initial transaction state when first detected from bank data
+    - **Completed**: Final settled state after funds have been fully transferred
+    
+    ### The Pending-to-Completed Transition Process
+    
+    #### 1. Initial Pending State
+    When a transaction first appears in bank data, it starts as a **pending** transaction:
+    ```json
+    {
+      "id": "ff8c37c0-b538-4074-936c-bca2943a9773",
+      "status": "pending",
+      "data": {
+        "amount_cents": -125000,
+        "currency": "USD",
+        "description": "ACH Transfer to Vendor Payment",
+        "transaction_date": "2024-12-15",
+        "external_service_id": "tx_abc123def456"
+      },
+      "tesote_imported_at": "2024-12-15T10:30:00Z",
+      "tesote_updated_at": "2024-12-15T10:30:00Z"
+    }
+    ```
+    
+    #### 2. Bank Data Limitations
+    **Important**: Unlike some financial data providers, bank data does **not** provide reliable indicators for when transactions are fully settled. Banks often show transactions as "completed" in their systems while the actual settlement process is still ongoing.
+    
+    #### 3. Tesote's Aging Logic
+    To address this limitation, Tesote implements **aging logic** that determines when a transaction has likely fully settled:
+
+    - **Daily Sync Requirement**: Aging logic requires **daily Tesote-to-Bank Syncs** (user-initiated in Tesote platform) to function properly
+    - **Business Hours Based**: Currently uses fixed 36 business hours aging across all banks
+    - **Initial Status**: When first discovered, transactions appear as `pending` or `completed` based on age
+    - **Status Evolution**: `pending` → `completed` after 36 business hours (appears in `modified` array)
+    
+    **🚀 Coming Soon**: Our team is actively developing a more intelligent aging algorithm that will include:
+    - **Smart Confidence Scoring**: AI-powered confidence scores (0.0-1.0) for settlement likelihood
+    - **Transaction Pattern Analysis**: Historical transaction behavior analysis
+    - **Dynamic Aging Rules**: Adaptive timing based on transaction types and amounts
+    - **Real-time Risk Assessment**: Enhanced fraud and settlement risk detection
+    
+    #### 4. Completed State Transition
+    Once 36 business hours have elapsed, the transaction transitions to **completed**:
+    ```json
+    {
+      "id": "ff8c37c0-b538-4074-936c-bca2943a9773", // Same ID as pending state
+      "status": "completed",
+      "data": {
+        "amount_cents": -125000, // Amount typically stays the same
+        "currency": "USD",
+        "description": "ACH Transfer to Vendor Payment",
+        "transaction_date": "2024-12-15",
+        "external_service_id": "tx_abc123def456"
+      },
+      "tesote_imported_at": "2024-12-15T10:30:00Z",
+      "tesote_updated_at": "2024-12-17T14:45:00Z" // Updated when status changed
+    }
+    ```
+    
+    ### Sync API Behavior During Transitions
+    
+    When a pending transaction becomes completed, the `/transactions/sync` endpoint represents this through:
+    
+    **Modified Array**: Contains the same transaction with updated status
+    ```json
+    {
+      "modified": [
+        {
+          "transaction_id": "ff8c37c0-b538-4074-936c-bca2943a9773",
+          "account_id": "account-uuid-456",
+          "amount": -1250.00,
+          "iso_currency_code": "USD",
+          "unofficial_currency_code": "USD",
+          "date": "2024-12-15",
+          "datetime": "2024-12-15T10:30:00Z",
+          "name": "ACH Transfer to Vendor Payment",
+          "merchant_name": "ABC Vendor Services",
+          "pending": false,
+          "category": ["Business Services", "Vendor Payments"]
+        }
+      ]
+    }
+    ```
+    
+    **Important**: The same transaction ID persists through the entire lifecycle - only the status and potentially other details change.
+    
+    ### Critical Requirements for Accurate Aging
+
+    #### Daily Tesote-to-Bank Sync Dependency
+    ```
+    ⚠️  CRITICAL: Aging logic requires daily Tesote-to-Bank Syncs (user-initiated)
+
+    Without Recent Tesote-to-Bank Syncs → Cannot Confirm Transaction Status → Aging Stops
+    ```
+
+    **Why Daily Tesote-to-Bank Syncs Matter**:
+    - Tesote must re-verify transaction data from the bank to confirm it still exists
+    - Stale data (>24 hours) cannot be reliably aged due to uncertainty
+    - Some pending transactions disappear entirely (authorization holds, cancelled transactions)
+    - **Note**: This is about users syncing Tesote with banks, NOT about API consumers syncing with Tesote
+
+    #### Tesote-to-Bank Sync Frequency Recommendations
+    | Account Activity | Recommended Sync Frequency | Aging Reliability |
+    |------------------|---------------------------|-------------------|
+    | **High Volume** (>10 transactions/day) | **2x daily** | Optimal aging timing |
+    | **Medium Volume** (3-10 transactions/day) | **Daily** | Good aging timing |
+    | **Low Volume** (<3 transactions/day) | **Daily** | Standard aging timing |
+    | **No Recent Syncs** (>48 hours) | Immediate | Aging suspended |
+    
+    ### Transaction Mutability & Edge Cases
+    
+    #### Completed Transactions Can Still Change
+    Even **completed** transactions are not completely immutable:
+    - **Refunds**: Can modify or reverse completed transactions
+    - **Bank Corrections**: Institutions may recategorize or adjust amounts  
+    - **Chargebacks**: Credit card disputes can alter transaction details
+    - **Currency Adjustments**: International transactions may have final amount adjustments
+    
+    #### Pending Transactions That May Not Complete
+    Some pending transactions may first appear in `added`, then later be `removed` without becoming completed:
+    - **Failed transfers** - Insufficient funds or account issues
+    - **Cancelled payments** - Business decision or compliance hold
+    - **Data adjustments** - Bank corrections to amount or details after settlement
+    - **Authorization failures** - Banking security or compliance blocks
+    
+    These follow the pattern: `added` → `removed` (skipping the completed state).
+    
+    ### Best Practices for Implementation
+    
+    #### 1. Handle All Sync Arrays
+    ```python
+    def process_sync_response(sync_data):
+        # Process in order: removed, modified, added
+        for removed_tx in sync_data['removed']:
+            delete_transaction(removed_tx['transaction_id'])
+            
+        for modified_tx in sync_data['modified']:
+            update_transaction(modified_tx)
+            
+        for added_tx in sync_data['added']:
+            # Note: added transactions can be either pending or completed
+            # depending on when Tesote first discovers them vs. 36 business hour threshold
+            create_or_update_transaction(added_tx)
+    ```
+    
+
+    ## Webhook Notifications 🔔
+    **NEW**: Real-time webhook notifications for:
+    - **accounts.created** - When new accounts are added to your workspace
+    - **accounts.updated** - When account information changes
+    - **sync.updates_available** - When new transaction data is ready for synchronization
+
+    ## Setting Up Webhooks via Dashboard UI
+    Webhooks are configured through your **Tesote Dashboard** interface, not through API endpoints:
+
+    ### Step-by-Step UI Setup:
+
+    1. **Access Webhook Settings**
+       - Log into your Tesote Dashboard
+       - Navigate to **Settings** → **Webhook Subscriptions**
+       - Click **"Create New Webhook"** button
+
+         2. **Configure Webhook Endpoint**
+        - **Webhook URL**: Enter your HTTPS endpoint (e.g., `https://yourapp.com/webhooks/tesote`)
+        - **Description**: Add a descriptive name (e.g., "Production Transaction Notifications")
+        - **Status**: Toggle "Active" to enable the webhook
+        - **Important**: Your endpoint must handle both GET (challenge) and POST (events) requests
+
+         3. **Select Event Types**
+        Choose which events trigger notifications:
+        - ☑️ **accounts.created** - When new accounts are created in your workspace
+        - ☑️ **accounts.updated** - When existing account information is updated
+        - ☑️ **sync.updates_available** - When new transaction data is available for sync
+
+         4. **Configure Security Settings**
+        - **HMAC Secret**: Tesote generates a unique secret for payload verification
+        - **IP Whitelist**: Optionally restrict webhook delivery to Tesote's IP addresses (see IP list below)
+        - **Retry Policy**: Configure automatic retry attempts for failed deliveries
+
+    5. **Monitor Webhook Delivery**
+       - Check **"Recent Deliveries"** tab to monitor webhook success/failure
+       - View detailed logs for debugging failed deliveries
+              - Use manual retry for failed webhook attempts
+
+         ### UI Features:
+     - **Real-time Status Monitoring**: View delivery success rates and response times
+     - **Event Selection**: Checkboxes for each available event type with descriptions
+     - **Active Toggle**: Simple on/off switch to enable/disable webhook delivery
+     - **Secret Key Display**: View your auto-generated HMAC secret for signature verification
+     - **Delivery Logs**: Detailed logs of all webhook attempts with response codes
+     - **Manual Retry**: Re-send failed webhook deliveries with one click
+     - **Webhook Health**: Dashboard shows webhook endpoint health and uptime
+
+    ## Webhook Payload Format
+    All webhook notifications follow this structure:
+
+    ### accounts.created Event:
+    ```json
+    {
+      "id": "webhook-delivery-uuid",
+      "event": "accounts.created",
+      "created_at": "2024-12-15T10:30:00Z",
+      "data": {
+        "account_id": "ff8c37c0-b538-4074-936c-bca2943a9773",
+        "account_name": "Business Checking (...4521)",
+        "currency": "USD",
+        "workspace_id": "workspace-uuid"
+      }
+    }
+    ```
+
+    ### accounts.updated Event:
+    ```json
+    {
+      "id": "webhook-delivery-uuid",
+      "event": "accounts.updated",
+      "created_at": "2024-12-15T10:30:00Z",
+      "data": {
+        "account_id": "ff8c37c0-b538-4074-936c-bca2943a9773",
+        "account_name": "Business Checking (...4521)",
+        "changes": ["balance", "status"],
+        "workspace_id": "workspace-uuid"
+      }
+    }
+    ```
+
+    ### sync.updates_available Event:
+    ```json
+    {
+      "id": "webhook-delivery-uuid", 
+      "event": "sync.updates_available",
+      "created_at": "2024-12-15T10:30:00Z",
+      "data": {
+        "workspace_id": "workspace-uuid",
+        "accounts_with_updates": ["account-uuid-1", "account-uuid-2"],
+        "update_types": ["transactions", "balances"]
+      }
+    }
+    ```
+
+    **Important**: The signature is sent in HTTP headers, not in the JSON payload.
+
+    ## Sync Cursor & Webhook Process Flow
+
+    Here's a complete example showing how sync cursors work with webhooks when transaction data changes over time:
+
+    **Important Terminology:**
+    - **Tesote-to-Bank Sync**: User-initiated syncs within Tesote platform to get new/updated transaction data from banks
+    - **API-Consumer-to-Tesote Sync**: Your client application calls Tesote's API to get the updated data using cursors
+
+    **Enhanced Process Flow:**
+
+    ### 🔄 Simple Data Flow
+    ```
+    Step 1: 🏦 Bank → Transaction occurs (new/updated data)
+            ↓
+    Step 2: 👤 User initiates Tesote-to-Bank Sync in Tesote platform
+            ↓  
+    Step 3: 🔄 Tesote fetches & processes bank data
+            ↓
+    Step 4: 📡 Webhook sent to your endpoint
+            ↓ (< 10 seconds)
+    Step 5: 💻 Your webhook handler responds & queues job
+            ↓
+    Step 6: 💻 API-Consumer-to-Tesote Sync API call  
+            ↓
+    Step 7: 🔄 Tesote returns transaction data + new cursor
+            ↓
+    Step 8: 💻 Your system stores data & cursor
+    ```
+
+    ### 🎯 Two-Stage Process Summary
+    ```
+    STAGE 1: Tesote-to-Bank Sync (User-Initiated)
+    ┌─────────────────────────────────────────────┐
+    │ 🏦 Bank Data → 🔄 Tesote Platform           │
+    │ • User initiates sync in Tesote UI         │
+    │ • Tesote fetches data from bank             │ 
+    │ • Can be manual or scheduled                │
+    └─────────────────────────────────────────────┘
+                            ↓
+    STAGE 2: API-Consumer-to-Tesote Sync (Your Code)
+    ┌─────────────────────────────────────────────┐
+    │ 🔄 Tesote → 📡 Webhook → 💻 Your System     │
+    │ • You implement webhook handler             │
+    │ • You call sync API with cursor             │
+    │ • You store data & new cursor               │
+    └─────────────────────────────────────────────┘
+    ```
+
+    ### ⏱️ Timing & Responsibilities
+    | Step | Actor | Action | Timing | Your Control |
+    |------|-------|--------|--------|--------------|
+    | ① | Bank | Transaction occurs | Variable | ❌ None |
+    | ② | User | Initiate **Tesote-to-Bank Sync** | User-initiated | ✅ **You control timing** |
+    | ③ | Tesote | Process & store data | < 1 min | ❌ Automatic after step ② |
+    | ④ | Tesote | Send webhook | < 10 sec | ❌ Automatic after step ③ |
+    | ⑤ | You | Verify & queue **API-Consumer-to-Tesote Sync** | < 10 sec | ✅ **Critical** |
+    | ⑥ | You | **API-Consumer-to-Tesote Sync** API call | < 30 sec | ✅ **You implement** |
+    | ⑦ | Tesote | Return transaction data | < 5 sec | ❌ Automatic |
+    | ⑧ | You | Store data & cursor | Variable | ✅ **You implement** |
+
+    ### 🎯 Key Success Factors
+    - **Fast Webhook Response**: Steps ④→⑤ must complete in < 10 seconds
+    - **Cursor Management**: Always store the `new_cursor` from step ⑦ 
+    - **Idempotency**: Use `X-Tesote-Webhook-Id` to avoid duplicate processing
+    - **Error Handling**: Failed webhooks retry 5x with exponential backoff
+
+    ### 🚨 Error Handling Flow
+    ```
+    Webhook Delivery Failed (Timeout/Error)
+           │
+           ▼
+    ⏰ Retry Schedule:
+    ├─ Attempt 1: +30 seconds
+    ├─ Attempt 2: +2 minutes  
+    ├─ Attempt 3: +8 minutes
+    ├─ Attempt 4: +30 minutes
+    └─ Attempt 5: +2 hours
+           │
+           ▼ (All retries failed)
+    📧 Alert sent to your dashboard
+    ```
+
+    ### 📊 Sync Scenarios Comparison
+    | Scenario | Webhook Payload | Your Action | Expected Result |
+    |----------|-----------------|-------------|-----------------|
+    | **New Transaction** | `"new_ids": ["tx-123"]` | **API-Consumer-to-Tesote Sync** → Add to DB | Transaction created |
+    | **Updated Transaction** | `"updated_ids": ["tx-123"]` | **API-Consumer-to-Tesote Sync** → Update in DB | Transaction modified |
+    | **Corrected Transaction** | `"updated_ids": ["tx-123"]` | **API-Consumer-to-Tesote Sync** → Update in DB | Amount/details changed |
+    | **Cancelled Transaction** | `"removed_ids": ["tx-123"]` | **API-Consumer-to-Tesote Sync** → Remove from DB | Transaction deleted |
+    | **Mixed Changes** | All arrays populated | **API-Consumer-to-Tesote Sync** → Process all | Multiple operations |
+
+    ### 💡 Quick Reference Card
+    ```
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║                        🚀 IMPLEMENTATION CHECKLIST               ║
+    ╠══════════════════════════════════════════════════════════════════╣
+    ║ ✅ WEBHOOK ENDPOINT: Respond to POST in < 10 seconds             ║
+    ║ ✅ SIGNATURE VERIFY: timestamp.payload → HMAC-SHA256             ║ 
+    ║ ✅ QUEUE PROCESSING: Don't block webhook with heavy work         ║
+    ║ ✅ CLIENT TO TESOTE SYNC: Call /api/v2/transactions/sync         ║
+    ║ ✅ CURSOR STORAGE: Always save new_cursor for next sync          ║
+    ║ ✅ IDEMPOTENCY: Use X-Tesote-Webhook-Id to avoid duplicates     ║
+    ║                                                                  ║
+    ║ 🔴 NEVER: Call sync API from webhook handler directly            ║
+    ║ 🔴 NEVER: Ignore new_cursor - you'll miss future updates        ║
+    ║ 🔴 NEVER: Sync backwards - cursors only move forward            ║
+    ╚══════════════════════════════════════════════════════════════════╝
+    ```
+
+    ### Initial Setup
+    Your client system:
+    1. **Configures webhook endpoint**: `https://your-app.com/tesote/webhooks`
+    2. **Subscribes to events**: `sync.updates_available`
+    3. **Stores sync cursor**: Initially `null` (start from beginning)
+
+    ### Timeline Example: Transaction #1234 Changes
+
+    #### **Day 1 - 10:00 AM: Transaction Created**
+    
+    **Tesote-to-Bank Sync:** User initiates sync, new transaction detected from bank
+    ```json
+    {
+      "id": "tx-1234",
+      "amount": "-2500000", 
+      "description": "Payment to ABC Corp",
+      "date": "2024-12-15",
+      "status": "pending"
+    }
+    ```
+
+    **Webhook Triggered:** `sync.updates_available`
+    ```json
+    {
+      "id": "webhook-delivery-001",
+      "event": "sync.updates_available", 
+      "created_at": "2024-12-15T10:00:30Z",
+      "data": {
+        "id": "account-uuid-456",
+        "new_ids": ["tx-1234"],
+        "updated_ids": [],
+        "removed_ids": [],
+        "new_transactions": 1,
+        "modified_transactions": 0,
+        "removed_transactions": 0,
+        "api_sync_cursor": {
+          "sync_from": "2024-12-15T10:00:00Z",
+          "sync_to": "2024-12-15T10:00:30Z"
+        }
+      }
+    }
+    ```
+
+    **Your Client Response:**
+    1. ✅ **Verify webhook signature** 
+    2. 🔄 **API-Consumer-to-Tesote Sync** - Call sync API to get the new transaction
+    3. 💾 **Store new cursor** for next sync
+
+    #### **Day 1 - 2:00 PM: Transaction Status Updated**
+    
+    **Tesote-to-Bank Sync:** User initiates sync, transaction status change to "completed" detected from bank
+    ```json
+    {
+      "id": "tx-1234",
+      "amount": "-2500000",
+      "description": "Payment to ABC Corp", 
+      "date": "2024-12-15",
+      "status": "completed" // ← Changed from "pending"
+    }
+    ```
+
+    **Webhook Triggered:** `sync.updates_available` 
+    ```json
+    {
+      "id": "webhook-delivery-002",
+      "event": "sync.updates_available",
+      "created_at": "2024-12-15T14:00:15Z", 
+      "data": {
+        "id": "account-uuid-456",
+        "new_ids": [],
+        "updated_ids": ["tx-1234"], // ← Same transaction, now updated
+        "removed_ids": [],
+        "new_transactions": 0,
+        "modified_transactions": 1,
+        "removed_transactions": 0,
+        "api_sync_cursor": {
+          "sync_from": "2024-12-15T14:00:00Z",
+          "sync_to": "2024-12-15T14:00:15Z"
+        }
+      }
+    }
+    ```
+
+    #### **Day 2 - 9:00 AM: Transaction Corrected**
+    
+    **Tesote-to-Bank Sync:** User initiates sync, amount correction detected from bank
+    ```json
+    {
+      "id": "tx-1234", 
+      "amount": "-2750000", // ← Amount corrected
+      "description": "Payment to ABC Corp (Corrected)",
+      "date": "2024-12-15",
+      "status": "completed"
+    }
+    ```
+
+    **Webhook Triggered:** `sync.updates_available`
+    ```json
+    {
+      "id": "webhook-delivery-003",
+      "event": "sync.updates_available",
+      "created_at": "2024-12-16T09:00:45Z",
+      "data": {
+        "id": "account-uuid-456", 
+        "new_ids": [],
+        "updated_ids": ["tx-1234"], // ← Same transaction, corrected again
+        "removed_ids": [],
+        "new_transactions": 0,
+        "modified_transactions": 1,
+        "removed_transactions": 0,
+        "api_sync_cursor": {
+          "sync_from": "2024-12-16T09:00:30Z",
+          "sync_to": "2024-12-16T09:00:45Z"
+        }
+      }
+    }
+    ```
+
+    ### Client Implementation Best Practices
+
+    #### **Webhook Handler:**
+    ```python
+    @app.route('/tesote/webhooks', methods=['POST'])
+    def handle_tesote_webhook():
+        # 1. Verify signature
+        if not verify_webhook_signature(request.data, request.headers['X-Tesote-Webhook-Signature'], 
+                                       request.headers['X-Tesote-Webhook-Timestamp'], WEBHOOK_SECRET):
+            return 401
+        
+        # 2. Parse webhook data  
+        webhook_data = request.json
+        if webhook_data['event'] == 'sync.updates_available':
+                     # 3. Queue API-Consumer-to-Tesote Sync job to avoid blocking webhook response
+         sync_queue.enqueue('sync_account_transactions', 
+                           account_id=webhook_data['data']['id'],
+                           webhook_id=webhook_data['id'])
+        
+        return 200  # Always respond quickly
+    ```
+
+         #### **API-Consumer-to-Tesote Sync Job Handler:**
+     ```python
+     def sync_account_transactions(account_id, webhook_id):
+        # 1. Get stored cursor position
+        cursor = get_stored_cursor(account_id) or "latest"
+        
+                 # 2. API-Consumer-to-Tesote Sync - Call Tesote sync API
+         response = tesote_api.post('/api/v2/transactions/sync', {
+             "tesote_account_id": account_id,
+             "cursor": cursor,
+             "count": 100
+         })
+        
+        # 3. Process transaction changes
+        for transaction in response['added']:
+            create_or_update_transaction(transaction)
+            
+        for transaction in response['modified']: 
+            create_or_update_transaction(transaction)
+            
+        for removal in response['removed']:
+            delete_transaction(removal['transaction_id'])
+        
+                 # 4. Store new cursor for next API-Consumer-to-Tesote Sync
+         if response['new_cursor']:
+             store_cursor(account_id, response['new_cursor'])
+        
+        # 5. Mark webhook as processed (idempotency)
+        mark_webhook_processed(webhook_id)
+    ```
+
+    #### **Key Implementation Notes:**
+
+    1. **Two-Stage Process**: 
+       - **Tesote-to-Bank Sync** is user-initiated in Tesote platform (you control when)
+       - **API-Consumer-to-Tesote Sync** is triggered by webhooks (you control how)
+    
+    2. **Idempotency**: Use `X-Tesote-Webhook-Id` header to avoid processing duplicate webhooks
+    
+    3. **Cursor Storage**: Always store the `new_cursor` from **API-Consumer-to-Tesote Sync** responses for subsequent syncs  
+    
+    4. **Fast Response**: Webhook endpoints should respond within 10 seconds (queue heavy **API-Consumer-to-Tesote Sync** processing)
+    
+    5. **Error Handling**: Failed webhooks are retried up to 5 times with exponential backoff
+    
+    6. **Transaction Updates**: The same transaction ID can appear in multiple webhook events as user-initiated **Tesote-to-Bank Sync** detects changes
+    
+    7. **Cursor Progression**: Cursors move forward chronologically during **API-Consumer-to-Tesote Sync** - never sync backwards
+
+
+
+    ## Tesote Webhook Delivery Infrastructure
+    All webhook requests originate from Tesote's dedicated webhook delivery servers. For enhanced security, you can whitelist these IP addresses:
+
+    ### Webhook Delivery IP Addresses:
+    ```
+    3.134.238.10
+    3.129.111.220
+    52.15.118.168
+    ```
+
+    ### Firewall Configuration:
+    If you use IP-based access control, ensure your firewall allows HTTPS traffic from these IP addresses:
+
+    ```bash
+    # Example iptables rules (Linux)
+    iptables -A INPUT -p tcp -s 3.134.238.10 --dport 443 -j ACCEPT
+    iptables -A INPUT -p tcp -s 3.129.111.220 --dport 443 -j ACCEPT
+    iptables -A INPUT -p tcp -s 52.15.118.168 --dport 443 -j ACCEPT
+    ```
+
+    ```nginx
+    # Example Nginx configuration
+    location /webhooks/tesote {
+        allow 3.134.238.10;
+        allow 3.129.111.220;
+        allow 52.15.118.168;
+        deny all;
+        
+        # Your webhook handler
+        proxy_pass http://your-app-backend;
+    }
+    ```
+
+    ```apache
+    # Example Apache .htaccess
+    <RequireAll>
+        Require ip 3.134.238.10
+        Require ip 3.129.111.220
+        Require ip 52.15.118.168
+    </RequireAll>
+    ```
+
+    ### Security Notes:
+    - **HTTPS Only**: All webhook deliveries use HTTPS (port 443)
+    - **Timeout**: Tesote waits up to 10 seconds for your response
+    - **Retries**: Failed deliveries are retried up to 5 times with exponential backoff (30s, 2m, 8m, 30m, 2h)
+    - **IP Stability**: These IP addresses are stable but may change with advance notice
+
+    ## Webhook Security & Verification
+    All webhook event payloads include HMAC-SHA256 signatures for security verification:
+
+    ### Webhook Headers
+    Each webhook request includes these headers:
+    - `X-Tesote-Webhook-Signature`: HMAC-SHA256 signature for verification
+    - `X-Tesote-Webhook-Timestamp`: Unix timestamp when the webhook was sent
+    - `X-Tesote-Webhook-Id`: Unique delivery ID for idempotency
+    - `X-Tesote-Webhook-Event`: The event type (e.g., "accounts.created")
+
+    ### Verifying Webhook Signatures:
+    ```python
+    import hmac
+    import hashlib
+
+    def verify_webhook_signature(payload, signature, timestamp, secret):
+        # Create the signed payload: timestamp.payload
+        signed_payload = f"{timestamp}.{payload}"
+        
+        # Calculate HMAC signature
+        calculated_signature = hmac.new(
+            secret.encode('utf-8'),
+            signed_payload.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+        
+        # Compare signatures securely
+        return hmac.compare_digest(signature, calculated_signature)
+
+    # Usage in your webhook endpoint
+    webhook_secret = "your_hmac_secret_from_dashboard"
+    signature = request.headers['X-Tesote-Webhook-Signature']
+    timestamp = request.headers['X-Tesote-Webhook-Timestamp']
+    payload = request.body
+    
+    if verify_webhook_signature(payload, signature, timestamp, webhook_secret):
+        # Process the webhook payload
+        process_tesote_webhook(payload)
+    else:
+        # Reject invalid signature
+        return 401
+    ```
+
+    ### Security Best Practices:
+    - **Always verify signatures** before processing webhook payloads using the timestamp + payload method
+    - **Use HTTPS endpoints** - Tesote only delivers to secure endpoints
+    - **Whitelist IP addresses** - Restrict access to Tesote's webhook delivery IPs (listed above)
+    - **Implement idempotency** - Use the `X-Tesote-Webhook-Id` header to handle duplicate deliveries
+    - **Return proper HTTP codes** - 200 for success, 4xx/5xx for failures (triggers retry)
+    - **Respond quickly** - Tesote waits up to 10 seconds for responses before timing out
+
+    Configure webhooks through your Tesote Dashboard to receive instant notifications when your data changes.
+
+    ## Migration from v1.0.0
+    v2.0.0 maintains backward compatibility for core endpoints while introducing enhanced features:
+    - All v1.0.0 endpoints remain functional
+    - New v2.0.0 endpoints provide enhanced capabilities
+    - Gradual migration path with deprecation notices
+    - Migration guide available in our developer portal
+
+    ## Getting Started
+    1. **Contact your Tesote Account Executive** to upgrade to API v2.0.0
+    2. Receive your enhanced bearer token and API access credentials
+    3. Test connectivity using the `/v2/status` endpoint
+    4. **Set up webhook subscriptions** using the detailed UI guide below:
+       - Configure webhook event handling (POST requests)
+       - Verify HMAC signatures for security
+       - Whitelist Tesote's webhook delivery IP addresses
+    5. Start using enhanced sync endpoints for optimal performance
+    6. Monitor enhanced rate limits and performance metrics in the dashboard
+
+    **Note**: API v2.0.0 access is available for all enterprise customers. Contact your account executive for upgrade assistance and technical onboarding support.
+
+    ## Moving from Development to Production
+
+    When you're ready to move your integration from development to production, follow these steps:
+
+    ### Step 1: Contact your Tesote Account Executive
+    Contact your Tesote Account Executive to Enable production API keys and webhooks for your account
+
+    ### Step 2: Generate Production API Key
+    1. **Create API Key**:
+       - Navigate to [https://equipo.tesote.com/api_keys](https://equipo.tesote.com/api_keys)
+       - Click "Nueva Clave"
+       - Provide a descriptive name (e.g., "Production Application v2")
+       - Securely store the generated bearer token
+
+    2. **Configure Webhooks**:
+       - Navigate to [https://equipo.tesote.com/webhook_subscriptions](https://equipo.tesote.com/webhook_subscriptions)
+       - Click "Nueva suscripción de Webhook"
+       - Fill out the webhook subscription form with your production webhook URL and select the events you want to receive
+
+    ### Step 3: Update API Endpoints
+    Change your base URL from development to production:
+
+    **Development Environment:**
+    ```
+    https://staging.tesote.com/api/v2
+    ```
+
+    **Production Environment:**
+    ```
+    https://equipo.tesote.com/api/v2
+    ```
+
+  version: 2.0.0
+  contact:
+    name: Tesote API Support
+    email: info@tesote.com
+  license:
+    name: Proprietary
+    url: https://tesote.com/terms
+servers:
+  - url: https://equipo.tesote.com/api/v2
+    description: Production API server
+  - url: https://staging.tesote.com/api/v2
+    description: Testing API server
+
+paths:
+  /accounts:
+    get:
+      summary: Fetch Accounts (Enhanced)
+      description: |
+        Retrieves a list of accounts using enhanced cursor-based pagination with improved performance and filtering capabilities.
+
+        ## Enhanced Cursor-Based Pagination
+
+        v2.0.0 uses cursor-based pagination for all endpoints, providing better performance and consistency:
+
+        - Use `page` parameter for pagination (default: 1)
+        - Use `per_page` parameter to control results per page (max 100, default 50)
+        - Response includes pagination metadata with current page, total pages, and total count
+        - Enhanced metadata includes total count estimation
+
+        ## New Filtering Options
+
+        - Filter by account type, status, and balance ranges
+        - Search by account name or identifier
+        - Sort by multiple fields with custom ordering
+
+        cURL example:
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/accounts?limit=50' \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      parameters:
+        - name: per_page
+          in: query
+          description: Number of accounts to return per page. Maximum is 100 (default is 50).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: page
+          in: query
+          description: Page number for pagination (default is 1).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with page-based pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccountV2'
+                  pagination:
+                    type: object
+                    description: Page-based pagination metadata
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      per_page:
+                        type: integer
+                        example: 50
+                      total_pages:
+                        type: integer
+                        example: 3
+                      total_count:
+                        type: integer
+                        example: 147
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /accounts/{accountId}:
+    get:
+      summary: Fetch Account (Enhanced)
+      description: |
+        Returns enhanced account information with real-time balance data and transaction summaries.
+
+        ## Enhanced Features
+        - Real-time balance information
+        - Transaction count summaries
+        - Account health metrics
+        - Enhanced metadata
+
+        **cURL**
+        ```bash
+        curl -X GET "https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID" \
+             -H "Authorization: Bearer <TOKEN>"
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          description: UUID of the account.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enhanced account information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account:
+                    $ref: '#/components/schemas/AccountV2'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+
+  /status:
+    get:
+      summary: Enhanced API Status Check
+      description: |
+        Enhanced status endpoint with detailed system information and API version details.
+
+        **cURL**
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/status' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enhanced status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "2.0.0"
+                  authenticated:
+                    type: boolean
+                    example: true
+                  client_info:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "12650aab-18fb-4bc3-b1d4-6264fcbcb755"
+                      tier:
+                        type: string
+                        enum: [standard, premium, enterprise]
+                        example: "premium"
+                      rate_limit_quota:
+                        type: integer
+                        example: 500
+                  system_info:
+                    type: object
+                    properties:
+                      uptime:
+                        type: string
+                        example: "99.99%"
+                      response_time_avg:
+                        type: string
+                        example: "45ms"
+
+  /whoami:
+    get:
+      summary: Current User Information
+      description: |
+        Returns information about the authenticated API client/user.
+
+        **cURL**
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/whoami' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: "12650aab-18fb-4bc3-b1d4-6264fcbcb755"
+                  workspace_id:
+                    type: string
+                    format: uuid
+                    example: "987654ab-cdef-4567-89ab-cdef12345678"
+                  workspace_name:
+                    type: string
+                    example: "Acme Corporation"
+                  api_key_name:
+                    type: string
+                    example: "Production API Key"
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                    example: ["accounts.read", "transactions.read", "transactions.sync"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /accounts/{accountId}/transactions:
+    get:
+      summary: List Account Transactions
+      description: |
+        Returns a paginated list of transactions for a specific account with optional date filtering.
+
+        **cURL**
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID/transactions?start_date=2024-12-01&end_date=2024-12-31' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          description: UUID of the account
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          description: Start date for filtering (inclusive). Required if end_date is provided.
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2024-12-01"
+        - name: end_date
+          in: query
+          description: End date for filtering (inclusive). Required if start_date is provided.
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2024-12-31"
+        - name: transactions_after_id
+          in: query
+          type: string
+          nullable: true
+          description: Transactions after this ID will be included in the response.
+        - name: transactions_before_id
+          in: query
+          type: string
+          nullable: true
+          description: Transactions before this ID will be included in the response.
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionV2'
+                  pagination:
+                    type: object
+                    properties:
+                      has_more:
+                        type: boolean
+                        example: true
+                      per_page:
+                        type: integer
+                        example: 50
+                      after_id:
+                        type: uuid
+                        example: '4534f415-6013-42ce-89a8-3b44c67b0a2a'
+                      before_id:
+                        type: uuid
+                        example: '56bc7ac6-7bcb-4269-b7e5-0190acdf0a81'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Sync Account Transactions
+      description: |
+        **Primary endpoint** for syncing transaction data - your client application fetches the latest transaction changes from Tesote after bank synchronization has occurred.
+
+        This RESTful endpoint follows standard conventions by nesting under the account resource. The account ID is provided in the URL path - no need to include it in the request body.
+
+        ## Features
+        - Real-time transaction data synchronization
+        - Automatic conflict resolution
+        - Cursor-based pagination for efficient data transfer
+        - Webhook trigger support
+
+        ## Usage
+        **cURL Example**
+        ```bash
+        curl -X POST "https://staging.tesote.com/api/v2/accounts/{accountId}/transactions/sync" \
+             -H "Authorization: Bearer <TOKEN>" \
+             -H "Content-Type: application/json" \
+             -d '{"cursor": "now", "count": 100}'
+        ```
+
+        ## Pagination
+        - Use `cursor: "now"` for initial sync or most recent data
+        - Use the `next_cursor` UUID from the response for subsequent calls
+        - Omit cursor to start from the beginning
+      parameters:
+        - name: accountId
+          in: path
+          description: UUID of the account to sync transactions for
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cursor:
+                  type: string
+                  description: |
+                    Cursor position for pagination. Possible values:
+                    - `"now"` - Start from the most recent position
+                    - UUID string - Continue from a previous `next_cursor` value
+                    - `null` or omit - Start from the beginning
+                  example: "now"
+                count:
+                  type: integer
+                  minimum: 1
+                  maximum: 1000
+                  default: 100
+                  description: Maximum number of transactions to fetch in this API-Consumer-to-Tesote Sync
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: API-Consumer-to-Tesote Sync completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  added:
+                    type: array
+                    description: New transactions added since last sync
+                    items:
+                      $ref: '#/components/schemas/SyncTransaction'
+                  modified:
+                    type: array
+                    description: Existing transactions that have been modified
+                    items:
+                      $ref: '#/components/schemas/SyncTransaction'
+                  removed:
+                    type: array
+                    description: Transaction IDs that have been removed
+                    items:
+                      type: object
+                      properties:
+                        transaction_id:
+                          type: string
+                          format: uuid
+                          example: "ff8c37c0-b538-4074-936c-bca2943a9773"
+                  next_cursor:
+                    type: string
+                    nullable: true
+                    description: Cursor UUID for the next sync request. Pass this value as the cursor parameter in your next API call to continue pagination.
+                    example: "497f6eca-6276-4993-bfeb-53cbbbba6f08"
+                  has_more:
+                    type: boolean
+                    description: Whether there are more transactions to sync
+                    example: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /transactions/sync:
+    post:
+      summary: Sync Transactions (Legacy - Backward Compatibility Only)
+      deprecated: true
+      description: |
+        ⚠️ **This endpoint is maintained for backward compatibility only.**
+
+        **New integrations should use:** `POST /accounts/{accountId}/transactions/sync`
+
+        The legacy endpoint requires passing the account ID in both the URL path and request body, which is redundant. The nested version is cleaner and follows REST conventions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tesote_account_id
+              properties:
+                tesote_account_id:
+                  type: string
+                  format: uuid
+                  description: UUID of the Tesote account to sync transactions for
+                  example: "ff8c37c0-b538-4074-936c-bca2943a9773"
+                cursor:
+                  type: string
+                  description: |
+                    Cursor position for pagination. Possible values:
+                    - `"now"` - Start from the most recent position
+                    - UUID string - Continue from a previous `next_cursor` value
+                    - `null` or omit - Start from the beginning
+                  example: "now"
+                count:
+                  type: integer
+                  minimum: 1
+                  maximum: 1000
+                  default: 100
+                  description: Maximum number of transactions to fetch in this API-Consumer-to-Tesote Sync
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: API-Consumer-to-Tesote Sync completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  added:
+                    type: array
+                    description: New transactions added since last sync
+                    items:
+                      $ref: '#/components/schemas/SyncTransaction'
+                  modified:
+                    type: array
+                    description: Existing transactions that have been modified
+                    items:
+                      $ref: '#/components/schemas/SyncTransaction'
+                  removed:
+                    type: array
+                    description: Transaction IDs that have been removed
+                    items:
+                      type: object
+                      properties:
+                        transaction_id:
+                          type: string
+                          format: uuid
+                          example: "ff8c37c0-b538-4074-936c-bca2943a9773"
+                  next_cursor:
+                    type: string
+                    nullable: true
+                    description: Cursor UUID for the next sync request. Pass this value as the cursor parameter in your next API call to continue pagination.
+                    example: "497f6eca-6276-4993-bfeb-53cbbbba6f08"
+                  has_more:
+                    type: boolean
+                    description: Whether there are more transactions to sync
+                    example: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /transactions/{transactionId}:
+    get:
+      summary: Get Transaction Details
+      description: |
+        Returns detailed information about a specific transaction.
+
+        **cURL**
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/transactions/TRANSACTION_ID' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      parameters:
+        - name: transactionId
+          in: path
+          description: UUID of the transaction
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionV2'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Enhanced JWT Authorization header using the Bearer scheme.
+        Example: "Bearer {token}"
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid parameters provided
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized - Invalid or missing bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not Found - The requested resource is not available
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnprocessableEntity:
+      description: Unprocessable Entity - Invalid count or cursor parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidCount:
+              value:
+                error: "count must be between 1 and 1000"
+            invalidCursor:
+              value:
+                error: "Invalid cursor format or cursor does not belong to this account"
+    Forbidden:
+      description: Forbidden - Historical sync not allowed for this account or time period
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflict - Data mutation conflict occurred during sync
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+
+  schemas:
+    AccountV2:
+      type: object
+      required:
+        - id
+        - name
+        - data
+        - bank
+        - legal_entity
+        - tesote_created_at
+        - tesote_updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "ff8c37c0-b538-4074-936c-bca2943a9773"
+        name:
+          type: string
+          example: "Banco Santander (...4521)"
+        data:
+          type: object
+          required:
+            - masked_account_number
+            - currency
+            - transactions_data_current_as_of
+            - balance_data_current_as_of
+          properties:
+            masked_account_number:
+              type: string
+              example: "*****4521"
+            currency:
+              type: string
+              example: "USD"
+            transactions_data_current_as_of:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2024-12-15T10:30:00-05:00"
+            balance_data_current_as_of:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2024-12-15T10:30:00-05:00"
+            custom_user_provided_identifier:
+              type: string
+              nullable: true
+              example: "CORP-MAIN-001"
+            balance_cents:
+              type: string
+              description: Present only when workspace has "Display Balances in API" enabled in Workspace Settings
+              example: "2847650000"
+            available_balance_cents:
+              type: string
+              description: Present only when workspace has "Display Balances in API" enabled in Workspace Settings
+              example: "2847650000"
+        bank:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+              example: "Banco Santander México"
+        legal_entity:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              nullable: true
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            legal_name:
+              type: string
+              nullable: true
+              example: "Grupo Empresarial TechnoLogística S.A. de C.V."
+        tesote_created_at:
+          type: string
+          format: date-time
+          example: "2024-12-01T09:15:30-05:00"
+        tesote_updated_at:
+          type: string
+          format: date-time
+          example: "2024-12-15T10:30:00-05:00"
+
+    TransactionV2:
+      type: object
+      required:
+        - id
+        - account_id
+        - amount_cents
+        - currency
+        - transaction_date
+        - tesote_created_at
+        - tesote_updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "ff8c37c0-b538-4074-936c-bca2943a9773"
+        status:
+          type: string
+          example: "pending"
+        data:
+          type: object
+          properties:
+            amount_cents:
+              type: integer
+              description: Transaction amount in cents (negative for debits, positive for credits)
+              example: -125000
+            currency:
+              type: string
+              example: "USD"
+            description:
+              type: string
+              example: "ACH Transfer to Vendor Payment"
+            transaction_date:
+              type: string
+              format: date
+              example: "2024-12-15"
+            created_at:
+              type: string
+              format: date-time
+              example: "2024-12-15T10:30:00Z"
+            created_at_date:
+              type: string
+              format: date-time
+              example: "2024-12-15"
+            note:
+              type: string
+              example: "ACH Transfer to Vendor Payment"
+            external_service_id:
+              type: string
+              example: "1234567890"
+            running_balance_cents:
+              type: integer
+              nullable: true
+              description: Running balance after this transaction (when enabled)
+              example: 2847650000
+        tesote_imported_at:
+          type: string
+          format: date-time
+          example: "2024-12-15T10:30:00Z"
+        tesote_updated_at:
+          type: string
+          format: date-time
+          example: "2024-12-15T14:45:00Z"
+        transaction_categories:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "my category"
+              external_category_code:
+                type: string
+                nullable: true
+                example: null
+              created_at:
+                type: string
+                format: date-time
+                example: "2024-10-07T17:35:42.807-04:00"
+              updated_at:
+                type: string
+                format: date-time
+                example: "2024-10-07T17:35:42.807-04:00"
+        counterparty:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+              example: "ABC Vendor Services"
+            account_number:
+              type: string
+              example: "****5678"
+
+    SyncTransaction:
+      type: object
+      required:
+        - transaction_id
+        - account_id
+        - amount
+        - iso_currency_code
+        - unofficial_currency_code
+        - date
+        - name
+        - pending
+        - category
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+          example: "ff8c37c0-b538-4074-936c-bca2943a9773"
+        account_id:
+          type: string
+          format: uuid
+          example: "987654ab-cdef-4567-89ab-cdef12345678"
+        amount:
+          type: number
+          format: float
+          description: Transaction amount (negative for debits, positive for credits)
+          example: -1250.00
+        iso_currency_code:
+          type: string
+          example: "USD"
+        unofficial_currency_code:
+          type: string
+          example: "USD"
+        date:
+          type: string
+          format: date
+          example: "2024-12-15"
+        datetime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-12-15T10:30:00Z"
+        name:
+          type: string
+          description: Transaction description
+          example: "ACH Transfer to Vendor Payment"
+        merchant_name:
+          type: string
+          nullable: true
+          example: "ABC Vendor Services"
+        pending:
+          type: boolean
+          description: Whether the transaction is pending or completed
+          example: false
+        category:
+          type: array
+          items:
+            type: string
+          example: ["Business Services", "Vendor Payments"]
+        running_balance_cents:
+          type: integer
+          nullable: true
+          description: Running balance after this transaction in cents (when enabled)
+          example: 2847650000
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid parameter"
+        error_code:
+          type: string
+          example: "VALIDATION_ERROR"
+        details:
+          type: object
+          additionalProperties: true
+
+    RateLimitErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Rate limit exceeded"
+        error_code:
+          type: string
+          example: "RATE_LIMIT_EXCEEDED"
+        retry_after:
+          type: integer
+          example: 60
+        quota_info:
+          type: object
+          properties:
+            limit:
+              type: integer
+              example: 500
+            remaining:
+              type: integer
+              example: 0
+            reset_at:
+              type: string
+              format: date-time
+              example: "2024-12-15T10:31:00-05:00"

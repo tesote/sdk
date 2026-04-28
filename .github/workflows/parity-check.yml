@@ -1,0 +1,24 @@
+name: parity-check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  parity:
+    name: cross-language parity
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Run parity check
+        run: python3 bin/check_parity.py

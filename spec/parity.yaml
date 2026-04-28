@@ -1,0 +1,96 @@
+# Cross-language parity manifest.
+#
+# Mirrors:
+#   docs/architecture/resources.md  (resources / methods, by API version)
+#   docs/architecture/errors.md     (typed-error taxonomy)
+#
+# Consumed by: bin/check_parity.py and the parity-check workflow.
+# Edit when (and only when) one of the architecture docs above changes.
+
+versions:
+  v1:
+    resources:
+      status:
+        methods: [status, whoami]
+      accounts:
+        methods: [list, get]
+      transactions:
+        methods: [listForAccount, get]
+
+  v2:
+    resources:
+      status:
+        methods: [status, whoami]
+      accounts:
+        methods: [list, get, sync]
+      transactions:
+        methods: [listForAccount, get, export, sync, bulk, search]
+      sync_sessions:
+        methods: [list, get]
+      transaction_orders:
+        methods: [list, get, create, submit, cancel]
+      batches:
+        methods: [create, get, approve, submit, cancel]
+      payment_methods:
+        methods: [list, get, create, update, delete]
+
+  v3:
+    resources:
+      status:
+        methods: [status, whoami]
+      accounts:
+        methods: [list, get, sync]
+      transactions:
+        methods: [listForAccount, get, export, sync, bulk, search]
+      sync_sessions:
+        methods: [list, get]
+      transaction_orders:
+        methods: [list, get, create, submit, cancel]
+      batches:
+        methods: [create, get, approve, submit, cancel]
+      payment_methods:
+        methods: [list, get, create, update, delete]
+      balance_history:
+        methods: [listForAccount]
+      categories:
+        methods: [list, get, create, update, delete]
+      counterparties:
+        methods: [list, get, create, update, delete]
+      legal_entities:
+        methods: [list, get]
+      connections:
+        methods: [list, get, status]
+      webhooks:
+        methods: [list, get, create, update, delete]
+      reports:
+        methods: [cashFlow]
+      workspace:
+        methods: [get]
+      mcp:
+        methods: [handle]
+
+# Typed errors. `class` is the canonical class name (TS/Python/Ruby).
+# Java/PHP append `Exception` instead of `Error`; Go uses `Err<Name>` sentinels
+# alongside `*<Name>Error` types — the parity script checks per-language naming.
+errors:
+  - { code: UNAUTHORIZED,           http: 401, class: UnauthorizedError }
+  - { code: API_KEY_REVOKED,        http: 401, class: ApiKeyRevokedError }
+  - { code: WORKSPACE_SUSPENDED,    http: 403, class: WorkspaceSuspendedError }
+  - { code: ACCOUNT_DISABLED,       http: 403, class: AccountDisabledError }
+  - { code: HISTORY_SYNC_FORBIDDEN, http: 403, class: HistorySyncForbiddenError }
+  - { code: MUTATION_CONFLICT,      http: 409, class: MutationDuringPaginationError }
+  - { code: UNPROCESSABLE_CONTENT,  http: 422, class: UnprocessableContentError }
+  - { code: INVALID_DATE_RANGE,     http: 422, class: InvalidDateRangeError }
+  - { code: RATE_LIMIT_EXCEEDED,    http: 429, class: RateLimitExceededError }
+  - { code: SERVICE_UNAVAILABLE,    http: 503, class: ServiceUnavailableError }
+
+# Languages the parity script should check. Each entry is the directory under
+# `packages/` and the case convention used for method names in that language's
+# source. Resources are matched as snake_case in every language.
+languages:
+  - { dir: ts,     method_case: camel,  class_suffix: Error,     extensions: [ts, tsx] }
+  - { dir: python, method_case: snake,  class_suffix: Error,     extensions: [py] }
+  - { dir: ruby,   method_case: snake,  class_suffix: Error,     extensions: [rb] }
+  - { dir: java,   method_case: camel,  class_suffix: Exception, extensions: [java] }
+  - { dir: php,    method_case: camel,  class_suffix: Exception, extensions: [php] }
+  - { dir: go,     method_case: pascal, class_suffix: Error,     extensions: [go] }

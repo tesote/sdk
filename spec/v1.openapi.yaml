@@ -1,0 +1,1885 @@
+# Vendored from upstream — do not edit by hand.
+# Source: engines/tesote_api/docs/openapi.yaml
+# Upstream repo: tesote/treasury
+# Upstream commit: f28eeb2be39895cb1e8ff45a6b9cad3706c7491f
+# Refresh: see spec/README.md
+openapi: 3.1.0
+info:
+  title: Tesote API
+  description: |
+    # Welcome to the Tesote API
+
+    The Tesote API provides secure, reliable access to financial account data and transaction information. Built for developers who need robust financial data integration with enterprise-grade security and compliance.
+
+    ## Key Features
+    - **Secure Authentication**: Bearer token-based authentication with JWT
+    - **Real-time Data**: Access to up-to-date account balances and transaction history
+    - **Comprehensive Coverage**: Support for multiple financial institutions and account types
+    - **Developer-Friendly**: RESTful design with comprehensive documentation and examples
+    - **Enterprise Ready**: Built for scale with rate limiting and monitoring
+    ## Rate Limiting
+    The Tesote API implements rate limiting to ensure fair usage and system stability:
+    - **Limit**: 200 requests per minute per IP address
+    - **Window**: 60-second rolling window
+    - **Response**: When the limit is exceeded, the API returns a `429 Too Many Requests` status code
+    - **Retry-After**: The response includes a `Retry-After` header indicating when to retry (in seconds)
+    Rate limit headers are included in API responses to help you track your usage.
+    ## Coming Soon
+    **Webhooks**: We're developing webhook functionality to improve real-time data synchronization. This will allow your application to receive instant notifications when account balances change or new transactions are processed, eliminating the need for frequent polling.
+    ## Getting Started
+    1. **Contact your Tesote Account Executive** to request API credentials
+    2. Receive your bearer token and account configuration
+    3. Test connectivity using the `/status` endpoint
+    4. Start making API calls to access your financial data
+    5. Monitor rate limits to ensure optimal performance
+
+    **Note**: API access is provided as part of our enterprise offering. Contact your account executive for credentials and technical onboarding support.
+
+    ## How Data Flows in V1 API
+
+    Understanding the data flow in Tesote API V1 helps you build robust integrations that maintain data consistency and handle transaction changes properly.
+
+    ### 🔄 Simple Data Flow
+
+    V1 API uses a **polling-based architecture** where your application regularly checks for updates:
+
+    ```
+    Step 1: 🏦 Bank → Transaction occurs (new/updated data)
+            ↓
+    Step 2: 👤 User initiates Tesote-to-Bank Sync in Tesote platform
+            ↓
+    Step 3: 🔄 Tesote fetches & processes bank data
+            ↓
+    Step 4: ⏰ Your scheduled polling job triggers
+            ↓
+    Step 5: 💻 Your app polls transactions endpoint
+            ↓
+    Step 6: 🔄 Tesote returns transaction data
+            ↓
+    Step 7: 💻 Your system stores/updates data
+    ```
+
+    ### 🎯 Two-Stage Process Summary
+
+    ```
+    STAGE 1: Tesote-to-Bank Sync (User-Initiated)
+    ┌─────────────────────────────────────────────┐
+    │ 🏦 Bank Data → 🔄 Tesote Platform           │
+    │ • User initiates sync in Tesote UI         │
+    │ • Tesote fetches data from bank             │
+    │ • Can be manual or scheduled                │
+    └─────────────────────────────────────────────┘
+                            ↓
+    STAGE 2: Your Polling Process (Your Code)
+    ┌─────────────────────────────────────────────┐
+    │ ⏰ Schedule → 💻 Your System → 🔄 Tesote    │
+    │ • You implement scheduled polling           │
+    │ • You call transactions API with date range │
+    │ • You poll scope=deleted for changes        │
+    │ • You store data & track last sync time     │
+    └─────────────────────────────────────────────┘
+    ```
+
+    ### ⏱️ Timing & Responsibilities
+
+    | Step | Actor | Action | Timing | Your Control |
+    |------|-------|--------|--------|--------------|
+    | ① | Bank | Transaction occurs | Variable | ❌ None |
+    | ② | User | Initiate **Tesote-to-Bank Sync** | User-initiated | ✅ **You control timing** |
+    | ③ | Tesote | Process & store data | < 1 min | ❌ Automatic after step ② |
+    | ④ | You | Scheduled polling job triggers | Your schedule | ✅ **You control frequency** |
+    | ⑤ | You | Poll transactions endpoint | Based on schedule | ✅ **You implement** |
+    | ⑥ | Tesote | Return transaction data | < 5 sec | ❌ Automatic |
+    | ⑦ | You | Store data & track sync time | Variable | ✅ **You implement** |
+
+    ### 🎯 Key Success Factors
+    - **Regular Polling**: Poll transactions daily (or more frequently for active accounts)
+    - **Poll Deleted Scope**: Query `scope=deleted` to detect removed transactions
+    - **Date Range Tracking**: Track last sync date to minimize API calls
+    - **Idempotency**: Use transaction IDs to avoid duplicate storage
+    - **Rate Limiting**: Respect API rate limits (200 requests/minute)
+
+    ### 📊 Polling Patterns Comparison
+
+    | Scenario | Polling Endpoint | Query Parameters | Expected Result |
+    |----------|-----------------|------------------|-----------------|
+    | **New Transactions** | `/accounts/{id}/transactions` | `start_date`, `end_date` | New transactions returned |
+    | **Deleted Transactions** | `/accounts/{id}/transactions` | `scope=deleted`, `start_date`, `end_date` | Deleted transaction IDs returned |
+    | **Full Sync** | `/accounts/{id}/transactions` | `start_date`, `end_date`, pagination | All transactions in range |
+    | **Recent Changes** | `/accounts/{id}/transactions` | `start_date=yesterday` + `scope=deleted` | Recent adds + deletes |
+
+    ### 💡 Quick Reference Card
+
+    ```
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║                        🚀 IMPLEMENTATION CHECKLIST               ║
+    ╠══════════════════════════════════════════════════════════════════╣
+    ║ ✅ POLLING SCHEDULE: Set up daily (or more frequent) polling     ║
+    ║ ✅ TRANSACTIONS ENDPOINT: Call with date range filters           ║
+    ║ ✅ DELETED SCOPE: Poll scope=deleted to detect removals          ║
+    ║ ✅ DATE TRACKING: Store last sync time for incremental polling   ║
+    ║ ✅ IDEMPOTENCY: Use transaction IDs to avoid duplicates         ║
+    ║ ✅ ERROR HANDLING: Retry failed requests with exponential backoff║
+    ║                                                                  ║
+    ║ 🔴 NEVER: Poll more than 200 requests/minute (rate limit)       ║
+    ║ 🔴 NEVER: Ignore deleted scope - you'll miss removals           ║
+    ║ 🔴 NEVER: Poll without date filters - inefficient & slow        ║
+    ╚══════════════════════════════════════════════════════════════════╝
+    ```
+
+    ### Polling Implementation Example
+
+    #### **Scheduled Polling Job:**
+    ```python
+    def poll_tesote_transactions():
+        # 1. Get last sync timestamp
+        last_sync = get_last_sync_timestamp() or "30_days_ago"
+        today = date.today().isoformat()
+
+        for account in get_active_accounts():
+            # 2. Poll for new/updated transactions
+            response = tesote_api.get(
+                f'/api/v1/accounts/{account.id}/transactions',
+                params={
+                    'start_date': last_sync,
+                    'end_date': today,
+                    'per_page': 100
+                }
+            )
+
+            # 3. Process new/updated transactions
+            for transaction in response['transactions']:
+                upsert_transaction(transaction)
+
+            # 4. Poll for deleted transactions
+            deleted_response = tesote_api.get(
+                f'/api/v1/accounts/{account.id}/transactions',
+                params={
+                    'scope': 'deleted',
+                    'start_date': last_sync,
+                    'end_date': today,
+                    'per_page': 100
+                }
+            )
+
+            # 5. Remove deleted transactions
+            for deleted_tx in deleted_response['transactions']:
+                delete_transaction(deleted_tx['id'])
+
+        # 6. Update last sync timestamp
+        store_last_sync_timestamp(today)
+    ```
+
+    ### Polling Frequency Recommendations
+
+    | Account Activity | Recommended Polling Frequency | Rationale |
+    |------------------|------------------------------|-----------|
+    | **Very High Volume** (>1,000 transactions/day) | **Every 1-2 hours** | Enterprise accounts need frequent updates for real-time operations |
+    | **High Volume** (100-1,000 transactions/day) | **Every 4-6 hours** | Catch changes quickly while respecting rate limits |
+    | **Medium Volume** (10-100 transactions/day) | **Daily** | Balance freshness with API efficiency |
+    | **Low Volume** (<10 transactions/day) | **Daily** | Maintain consistency without excess API calls |
+    | **Inactive** (no recent activity) | **Weekly** | Reduce unnecessary API calls |
+
+    ### Transaction Mutability & Changes
+
+    #### Transactions Can Change After Creation
+    Even after transactions appear in the API, they can still change:
+    - **Status Changes**: `pending` → `completed` based on Tesote's aging logic (36 business hours)
+    - **Amount Adjustments**: Banks may correct amounts after settlement
+    - **Deletions**: Failed transactions, cancellations, or bank corrections appear in `scope=deleted`
+    - **Category Updates**: User-assigned categories and counterparties can change
+
+    #### Polling for Changes
+    Your polling strategy should handle all change types:
+    ```python
+    # Poll for new/updated transactions (upsert operation)
+    GET /api/v1/accounts/{id}/transactions?start_date={last_sync}&end_date={today}
+
+    # Poll for deleted transactions (delete operation)
+    GET /api/v1/accounts/{id}/transactions?scope=deleted&start_date={last_sync}&end_date={today}
+    ```
+
+    ### Best Practices for Implementation
+
+    1. **Incremental Polling**: Always use `start_date` based on your last successful sync
+    2. **Handle Deleted Scope**: Poll `scope=deleted` in addition to regular transactions
+    3. **Upsert Logic**: Use transaction IDs to update existing records or create new ones
+    4. **Error Recovery**: Store sync checkpoint before processing to enable retry
+    5. **Rate Limiting**: Implement exponential backoff if you hit rate limits
+    6. **Pagination**: Handle large result sets with cursor-based pagination
+    7. **Monitoring**: Track polling failures and sync gaps for debugging
+
+  version: 1.0.0
+  contact:
+    name: Tesote API Support
+    email: dev@tesote.com
+  license:
+    name: Proprietary
+servers:
+  - url: https://equipo.tesote.com/api/v1
+    description: Production API server
+  - url: https://staging.tesote.com/api/v1
+    description: Testing API server
+paths:
+  /accounts:
+    get:
+      summary: Fetch Accounts
+      description: |
+        Retrieves a list of accounts using traditional page-based pagination. The response includes total count and account details.
+
+        ## Page-Based Pagination
+
+        This endpoint uses traditional page-based pagination with page numbers:
+
+        - Use `page` parameter to specify which page to retrieve (starting from 1)
+        - Use `per_page` parameter to control how many accounts per page (max 100, default 50)
+        - Response includes pagination metadata with current page, total pages, and total count
+
+        cURL example:
+        ```
+        curl -X GET 'https://staging.tesote.com/api/v1/accounts?page=1&per_page=50' \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      parameters:
+        - name: per_page
+          in: query
+          description: Number of accounts to return per page. Maximum is 100 (default is 50).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: page
+          in: query
+          description: Page number to retrieve (starting from 1).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A successful response returning a list of accounts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: Total number of accounts available
+                    example: 10
+                  accounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+                  pagination:
+                    type: object
+                    description: Page-based pagination information
+                    properties:
+                      current_page:
+                        type: integer
+                        description: Current page number
+                        example: 1
+                      per_page:
+                        type: integer
+                        description: Number of accounts per page
+                        example: 50
+                      total_pages:
+                        type: integer
+                        description: Total number of pages available
+                        example: 1
+                      total_count:
+                        type: integer
+                        description: Total number of accounts
+                        example: 10
+        '400':
+          description: Bad Request - Invalid pagination parameters provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Pagination size must be between 1 and 100
+        '401':
+          description: Unauthorized - Invalid or missing bearer token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+        '404':
+          description: Not Found - The requested resource is not available.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Resource not found
+
+  /accounts/{accountId}:
+    get:
+      summary: Fetch one account
+      description: |
+        Returns the account identified by `accountId`.
+
+        **cURL**
+        ```bash
+        curl -X GET "https://staging.tesote.com/api/v1/accounts/ACCOUNT_ID" \
+             -H "Authorization: Bearer <TOKEN>"
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          description: UUID of the account.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account:
+                    $ref: '#/components/schemas/Account'
+              examples:
+                with_balances:
+                  summary: Response when workspace has display_balances_in_api enabled
+                  description: The workspace owner must enable "Display Balances in API" in Workspace Settings
+                  value:
+                    account:
+                      id: ff8c37c0-b538-4074-936c-bca2943a9773
+                      name: Banco Santander (...4521)
+                      data:
+                        masked_account_number: "*****4521"
+                        currency: USD
+                        transactions_data_current_as_of: "2024-12-15T10:30:00-05:00"
+                        balance_data_current_as_of: "2024-12-15T10:30:00-05:00"
+                        custom_user_provided_identifier: "CORP-MAIN-001"
+                        balance_cents: "2847650000"
+                        available_balance_cents: "2847650000"
+                      bank:
+                        name: Banco Santander México
+                      legal_entity:
+                        id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                        legal_name: Grupo Empresarial TechnoLogística S.A. de C.V.
+                      tesote_created_at: "2024-12-01T09:15:30-05:00"
+                      tesote_updated_at: "2024-12-15T10:30:00-05:00"
+                without_balances:
+                  summary: Response when workspace has display_balances_in_api disabled (default)
+                  description: Balances are hidden by default. Workspace owner must enable in Workspace Settings
+                  value:
+                    account:
+                      id: ff8c37c0-b538-4074-936c-bca2943a9773
+                      name: Banco Santander (...4521)
+                      data:
+                        masked_account_number: "*****4521"
+                        currency: USD
+                        transactions_data_current_as_of: "2024-12-15T10:30:00-05:00"
+                        balance_data_current_as_of: "2024-12-15T10:30:00-05:00"
+                        custom_user_provided_identifier: "CORP-MAIN-001"
+                      bank:
+                        name: Banco Santander México
+                      legal_entity:
+                        id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                        legal_name: Grupo Empresarial TechnoLogística S.A. de C.V.
+                      tesote_created_at: "2024-12-01T09:15:30-05:00"
+                      tesote_updated_at: "2024-12-15T10:30:00-05:00"
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Account not found
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Rate limit exceeded
+                  retry_after:
+                    type: integer
+                    example: 60
+
+  /accounts/{accountId}/transactions:
+    get:
+      summary: Fetch transactions for an account
+      description: |
+        Retrieves a list of transactions for a specified account ID.
+
+        ## Cursor-Based Pagination
+
+        This API uses cursor-based pagination for efficient browsing through large transaction sets. Here's how it works:
+
+        1. **First Request**: Make a request without `transactions_after_id` or `transactions_before_id` to get the first page
+        2. **Next Page**: Use the `transactions_after_id` from the pagination response to get the next page
+        3. **Previous Page**: Use the `transactions_before_id` from the pagination response to get the previous page
+
+        **Important**: Never use both `transactions_after_id` and `transactions_before_id` in the same request.
+
+        ### Pagination Flow Example:
+
+        ```bash
+        # Step 1: Get first page
+        curl -X GET 'https://staging.tesote.com/api/v1/accounts/ACCOUNT_ID/transactions?per_page=50' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+
+        # Response includes pagination with transactions_after_id for next page:
+        # "pagination": {
+        #   "has_more": true,
+        #   "per_page": 50,
+        #   "transactions_after_id": "last-transaction-id-from-this-page",
+        #   "transactions_before_id": "first-transaction-id-from-this-page"
+        # }
+
+        # Step 2: Get next page using transactions_after_id from previous response
+        curl -X GET 'https://staging.tesote.com/api/v1/accounts/ACCOUNT_ID/transactions?transactions_after_id=last-transaction-id-from-this-page&per_page=50' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+
+        # Step 3: Go back using transactions_before_id from current response
+        curl -X GET 'https://staging.tesote.com/api/v1/accounts/ACCOUNT_ID/transactions?transactions_before_id=first-transaction-id-from-this-page&per_page=50' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+
+        The transactions are ordered by: `transaction_date DESC, created_at DESC, id DESC`
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the account
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter transactions from this date (YYYY-MM-DD)
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter transactions until this date (YYYY-MM-DD)
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: |
+            Number of transactions to return per page (default: 50, max: 100)
+        - name: transactions_transactions_after_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Return transactions after this transaction ID, ordered by transaction_date, created_at, and ID
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - deleted
+          description: Filter transactions by scope (e.g., 'deleted' for soft-deleted transactions)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with transaction data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: Total count of transactions matching the query
+                    example: 3
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionList'
+                  pagination:
+                    type: object
+                    properties:
+                      has_more:
+                        type: boolean
+                        description: Indicates if there are more transactions available
+                        example: true
+                      per_page:
+                        type: integer
+                        description: Number of transactions per page
+                        example: 50
+                      transactions_after_id:
+                        type: string
+                        description: ID of the last transaction in this page - use this for the next page request
+                        example: "fe46b712-ad15-46f8-b231-5e266f2d4ff9"
+                        nullable: true
+                      transactions_before_id:
+                        type: string
+                        description: ID of the first transaction in this page - use this for the previous page request
+                        example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                        nullable: true
+        '400':
+          description: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid pagination size
+        '404':
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Account not found
+        '422':
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cannot specify both transactions_after_id and transactions_before_id
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unexpected server error
+
+  /transactions/{transactionId}:
+    get:
+      summary: Fetch one transaction
+      description: |
+        Returns a transaction by ID.
+
+        **cURL**
+        ```bash
+        curl -X GET "https://staging.tesote.com/api/v1/transactions/TRANSACTION_ID" \
+             -H "Authorization: Bearer <TOKEN>"
+        ```
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the transaction.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction:
+                    $ref: '#/components/schemas/Transaction'
+              example:
+                transaction:
+                  id: fe46b712-ad15-46f8-b231-5e266f2d4ff9
+                  status: completed
+                  data:
+                    amount_cents: 125000000
+                    currency: USD
+                    description: Transferencia wire - Pago servicios consultoría Q4 2024
+                    transaction_date: "2024-12-14"
+                    created_at: "2024-12-14T14:30:15-05:00"
+                    created_at_date: "2024-12-14"
+                    note: "Invoice #INV-2024-4521 - Consultoría tecnológica"
+                    external_service_id: f4dad678-8aef-486a-aab5-a7b799457a01
+                  tesote_imported_at: "2024-12-14T14:35:22-05:00"
+                  tesote_updated_at: "2024-12-15T09:45:18-05:00"
+                  transaction_categories:
+                    - name: Servicios Profesionales
+                      external_category_code: "CORP-MAIN-001"
+                      created_at: "2024-12-14T14:35:25.455-05:00"
+                      updated_at: "2024-12-14T14:35:25.455-05:00"
+                  counterparty:
+                    name: Innovación Digital Solutions S.A.S.
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Transaction not found
+
+  /whoami:
+    get:
+      summary: Get client information
+      description: Returns information about the authenticated client.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInfo'
+        '401':
+          description: Unauthorized access - Authentication credentials were missing or incorrect.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+        '404':
+          description: Not Found - The requested resource could not be found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Resource not found
+
+  /status:
+    get:
+      summary: Check Authentication Status
+      description: |
+        This endpoint returns the current authentication status of the user.
+
+        cURL example:
+        ```
+        curl -X GET 'https://staging.tesote.com/api/status' \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer YOUR_TOKEN_HERE'
+        ```
+      responses:
+        '200':
+          description: Successful response indicating the status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /v2/accounts/{accountId}/transaction_orders:
+    get:
+      summary: List transaction orders for an account
+      description: |
+        Retrieves a list of transaction orders (payment orders) for a specified account ID.
+
+        Transaction orders represent payment instructions that can be created, approved, and submitted to banks.
+
+        cURL example:
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID/transaction_orders?status=submitted&per_page=50' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the account
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - draft
+              - pending_approval
+              - approved
+              - processing
+              - completed
+              - partially_completed
+              - failed
+              - cancelled
+          description: Filter orders by status
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of orders to return per page
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor for pagination (returned in meta.next_cursor)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with transaction orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionOrder'
+                  meta:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        description: Cursor for next page of results
+                      has_more:
+                        type: boolean
+                        description: Whether more results are available
+        '400':
+          description: Bad Request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a transaction order
+      description: |
+        Creates a new transaction order (payment instruction) for the specified account.
+
+        The order starts in 'draft' status and must be submitted before being sent to the bank.
+
+        cURL example:
+        ```bash
+        curl -X POST 'https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID/transaction_orders' \
+          -H 'Authorization: Bearer YOUR_API_KEY' \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "transaction_order": {
+              "destination_payment_method_id": "uuid",
+              "amount": "1000.00",
+              "currency": "VES",
+              "description": "Payment for services",
+              "idempotency_key": "unique-key-123"
+            }
+          }'
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transaction_order
+              properties:
+                transaction_order:
+                  type: object
+                  required:
+                    - destination_payment_method_id
+                    - amount
+                    - currency
+                  properties:
+                    destination_payment_method_id:
+                      type: string
+                      format: uuid
+                      description: ID of the destination payment method (beneficiary)
+                    amount:
+                      type: string
+                      description: Payment amount (decimal string)
+                      example: "1000.00"
+                    currency:
+                      type: string
+                      description: Currency code
+                      example: "VES"
+                    description:
+                      type: string
+                      description: Payment description
+                    scheduled_for:
+                      type: string
+                      format: date-time
+                      description: Optional scheduled execution time
+                    idempotency_key:
+                      type: string
+                      description: Optional idempotency key to prevent duplicate orders
+      responses:
+        '201':
+          description: Transaction order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_order:
+                    $ref: '#/components/schemas/TransactionOrder'
+        '400':
+          description: Bad Request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity - Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v2/accounts/{accountId}/transaction_orders/{orderId}:
+    get:
+      summary: Get a transaction order
+      description: |
+        Retrieves details of a specific transaction order, including execution status and attempts.
+
+        cURL example:
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID/transaction_orders/ORDER_ID' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the account
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the transaction order
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Transaction order found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_order:
+                    $ref: '#/components/schemas/TransactionOrder'
+        '404':
+          description: Transaction order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v2/accounts/{accountId}/transaction_orders/{orderId}/submit:
+    post:
+      summary: Submit a transaction order to the bank
+      description: |
+        Submits an approved transaction order to the bank for processing.
+
+        This creates a TesoteTransaction immediately with 'pending_confirmation' status and begins bank submission.
+
+        cURL example:
+        ```bash
+        curl -X POST 'https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID/transaction_orders/ORDER_ID/submit' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the account
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the transaction order
+      security:
+        - bearerAuth: []
+      responses:
+        '202':
+          description: Order submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_order:
+                    $ref: '#/components/schemas/TransactionOrder'
+        '409':
+          description: Conflict - Order cannot be submitted (invalid status)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity - Bank submission failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v2/accounts/{accountId}/transaction_orders/{orderId}/cancel:
+    post:
+      summary: Cancel a transaction order
+      description: |
+        Cancels a transaction order that has not yet been submitted to the bank.
+
+        Only orders in 'draft', 'pending_approval', or 'approved' status can be cancelled.
+
+        cURL example:
+        ```bash
+        curl -X POST 'https://staging.tesote.com/api/v2/accounts/ACCOUNT_ID/transaction_orders/ORDER_ID/cancel' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the account
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the transaction order
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_order:
+                    $ref: '#/components/schemas/TransactionOrder'
+        '409':
+          description: Conflict - Order cannot be cancelled (already submitted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v2/payment_methods:
+    get:
+      summary: List payment methods
+      description: |
+        Retrieves a list of payment methods (bank accounts, counterparty payment details) for the workspace.
+
+        Payment methods define where money can be sent to or received from.
+
+        cURL example:
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/payment_methods?method_type=bank_account&per_page=50' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: method_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - bank_account
+              - pago_movil
+              - wire
+              - crypto_wallet
+              - fx_rail
+              - ach
+          description: Filter by payment method type
+        - name: currency
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by currency (e.g., VES, USD)
+        - name: counterparty_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by counterparty ID
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of payment methods to return per page
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor for pagination
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with payment methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_methods:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+                  meta:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                      has_more:
+                        type: boolean
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a payment method
+      description: |
+        Creates a new payment method for a counterparty or account.
+
+        cURL example:
+        ```bash
+        curl -X POST 'https://staging.tesote.com/api/v2/payment_methods' \
+          -H 'Authorization: Bearer YOUR_API_KEY' \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "payment_method": {
+              "counterparty_id": "uuid",
+              "method_type": "bank_account",
+              "currency": "VES",
+              "label": "Main operating account",
+              "details": {
+                "bank_code": "0102",
+                "account_number": "01020123456789",
+                "account_type": "corriente"
+              }
+            }
+          }'
+        ```
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payment_method
+              properties:
+                payment_method:
+                  type: object
+                  required:
+                    - method_type
+                    - currency
+                  properties:
+                    counterparty_id:
+                      type: string
+                      format: uuid
+                      description: ID of the counterparty (required for external payment methods)
+                    tesote_account_id:
+                      type: string
+                      format: uuid
+                      description: ID of the Tesote account (for source payment methods)
+                    method_type:
+                      type: string
+                      enum:
+                        - bank_account
+                        - pago_movil
+                        - wire
+                        - crypto_wallet
+                        - fx_rail
+                        - ach
+                      description: Type of payment method
+                    currency:
+                      type: string
+                      description: Currency code
+                    label:
+                      type: string
+                      description: Human-readable label
+                    details:
+                      type: object
+                      description: Method-specific details (bank_code, account_number, etc.)
+      responses:
+        '201':
+          description: Payment method created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_method:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity - Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v2/payment_methods/{paymentMethodId}:
+    get:
+      summary: Get a payment method
+      description: |
+        Retrieves details of a specific payment method.
+
+        cURL example:
+        ```bash
+        curl -X GET 'https://staging.tesote.com/api/v2/payment_methods/PAYMENT_METHOD_ID' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the payment method
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Payment method found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_method:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Update a payment method
+      description: |
+        Updates an existing payment method.
+
+        cURL example:
+        ```bash
+        curl -X PATCH 'https://staging.tesote.com/api/v2/payment_methods/PAYMENT_METHOD_ID' \
+          -H 'Authorization: Bearer YOUR_API_KEY' \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "payment_method": {
+              "label": "Updated label",
+              "details": {
+                "account_number": "new_number"
+              }
+            }
+          }'
+        ```
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the payment method
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payment_method
+              properties:
+                payment_method:
+                  type: object
+                  properties:
+                    label:
+                      type: string
+                    details:
+                      type: object
+                      description: Method-specific details to update
+      responses:
+        '200':
+          description: Payment method updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_method:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a payment method
+      description: |
+        Soft deletes a payment method (can be restored later).
+
+        cURL example:
+        ```bash
+        curl -X DELETE 'https://staging.tesote.com/api/v2/payment_methods/PAYMENT_METHOD_ID' \
+          -H 'Authorization: Bearer YOUR_API_KEY'
+        ```
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the payment method
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Payment method deleted successfully
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Authorization header using the Bearer scheme.
+        Example: "Bearer {token}"
+
+  schemas:
+    Account:
+      type: object
+      required:
+        - id
+        - name
+        - data
+        - bank
+        - legal_entity
+        - tesote_created_at
+        - tesote_updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        data:
+          type: object
+          required:
+            - masked_account_number
+            - currency
+            - transactions_data_current_as_of
+            - balance_data_current_as_of
+          properties:
+            masked_account_number:
+              type: string
+            currency:
+              type: string
+              example: USD
+            transactions_data_current_as_of:
+              type: string
+              format: date-time
+              nullable: true
+            balance_data_current_as_of:
+              type: string
+              format: date-time
+              nullable: true
+            custom_user_provided_identifier:
+              type: string
+              nullable: true
+            balance_cents:
+              type: string
+              description: Present only when workspace has "Display Balances in API" enabled in Workspace Settings
+              example: "10000"
+            available_balance_cents:
+              type: string
+              description: Present only when workspace has "Display Balances in API" enabled in Workspace Settings
+              example: "5000"
+        bank:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+        legal_entity:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              nullable: true
+            legal_name:
+              type: string
+              nullable: true
+        tesote_created_at:
+          type: string
+          format: date-time
+        tesote_updated_at:
+          type: string
+          format: date-time
+
+    Transaction:
+      type: object
+      required:
+        - id
+        - status
+        - data
+        - tesote_imported_at
+        - tesote_updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          example: draft
+        data:
+          type: object
+          required:
+            - amount_cents
+            - currency
+          properties:
+            amount_cents:
+              type: integer
+              format: int64
+            currency:
+              type: string
+              example: USD
+            description:
+              type: string
+              nullable: true
+            transaction_date:
+              type: string
+              format: date
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: Deprecated – will change to created_at in v2
+            created_at_date:
+              type: string
+              format: date
+              nullable: true
+            note:
+              type: string
+              nullable: true
+            external_service_id:
+              type: string
+              nullable: true
+        tesote_imported_at:
+          type: string
+          format: date-time
+        tesote_updated_at:
+          type: string
+          format: date-time
+        transaction_categories:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              external_category_code:
+                type: string
+                nullable: true
+                description: Custom code for external system integration
+              created_at:
+                type: string
+                format: date-time
+              updated_at:
+                type: string
+                format: date-time
+        counterparty:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+
+    TransactionList:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 42d51cc6-78cd-4e69-9fea-c20e42f590e7
+        status:
+          type: string
+          example: completed
+        data:
+          type: object
+          properties:
+            amount_cents:
+              type: integer
+              example: -75500000
+            external_service_id:
+              type: string
+              nullable: true
+              example: "SPEI-202412140001"
+            currency:
+              type: string
+              example: USD
+            description:
+              type: string
+              nullable: true
+              example: SPEI - Pago nómina empleados diciembre 2024
+            transaction_date:
+              type: string
+              nullable: true
+              example: "2024-12-14"
+            created_at:
+              type: string
+              nullable: true
+              example: "2024-12-14T10:30:00-05:00"
+            created_at_date:
+              type: string
+              nullable: true
+              example: "2024-12-14"
+            note:
+              type: string
+              nullable: true
+              example: Pago quincenal - Nómina corporativa diciembre
+              description: User-provided note associated with this transaction
+        tesote_imported_at:
+          type: string
+          format: date-time
+          example: "2024-12-14T10:35:22-05:00"
+        tesote_updated_at:
+          type: string
+          format: date-time
+          example: "2024-12-14T10:35:22-05:00"
+
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        authenticated:
+          type: boolean
+          example: true
+
+    ClientInfo:
+      type: object
+      properties:
+        client:
+          type: object
+          properties:
+            id:
+              type: string
+              example: 12650aab-18fb-4bc3-b1d4-6264fcbcb755
+            name:
+              type: string
+              example: Corporativo Financiero LATAM S.A. de C.V.
+            type:
+              type: string
+              example: workspace
+
+    TransactionOrder:
+      type: object
+      required:
+        - id
+        - status
+        - amount
+        - currency
+        - source_account
+        - destination
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the transaction order
+        status:
+          type: string
+          enum:
+            - draft
+            - pending_approval
+            - approved
+            - processing
+            - completed
+            - partially_completed
+            - failed
+            - cancelled
+          description: Current status of the transaction order
+        amount:
+          type: number
+          format: double
+          description: Payment amount as decimal
+          example: 1000.00
+        currency:
+          type: string
+          description: Currency code
+          example: VES
+        description:
+          type: string
+          nullable: true
+          description: Payment description
+        reference:
+          type: string
+          nullable: true
+          description: Internal reference number
+        external_reference:
+          type: string
+          nullable: true
+          description: Bank-provided reference number
+        idempotency_key:
+          type: string
+          nullable: true
+          description: Client-provided idempotency key
+        scheduled_for:
+          type: string
+          format: date-time
+          nullable: true
+          description: Scheduled execution time
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the order was approved
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the order was submitted to the bank
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the order was completed
+        failed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the order failed
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the order was cancelled
+        source_account:
+          type: object
+          description: Source account information
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Account ID
+            name:
+              type: string
+              description: Account name
+            payment_method_id:
+              type: string
+              format: uuid
+              description: Source payment method ID
+        destination:
+          type: object
+          description: Destination payment information
+          properties:
+            payment_method_id:
+              type: string
+              format: uuid
+              description: Destination payment method ID
+            counterparty_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: Counterparty ID
+            counterparty_name:
+              type: string
+              nullable: true
+              description: Counterparty name
+        fee:
+          type: object
+          nullable: true
+          description: Transaction fee (if applicable)
+          properties:
+            amount:
+              type: number
+              format: double
+              description: Fee amount
+            currency:
+              type: string
+              description: Fee currency
+        execution_strategy:
+          type: string
+          nullable: true
+          description: Execution strategy from configuration
+        tesote_transaction:
+          type: object
+          nullable: true
+          description: Associated TesoteTransaction (created when submitted)
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Transaction ID
+            status:
+              type: string
+              description: Transaction status
+              example: pending_confirmation
+        latest_attempt:
+          type: object
+          nullable: true
+          description: Latest submission attempt
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum:
+                - pending
+                - submitted
+                - failed
+                - succeeded
+            attempt_number:
+              type: integer
+              description: Attempt sequence number
+            external_reference:
+              type: string
+              nullable: true
+              description: Bank reference for this attempt
+            submitted_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+            error_code:
+              type: string
+              nullable: true
+              description: Error code if attempt failed
+            error_message:
+              type: string
+              nullable: true
+              description: Error message if attempt failed
+        created_at:
+          type: string
+          format: date-time
+          description: When the order was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the order was last updated
+
+    PaymentMethod:
+      type: object
+      required:
+        - id
+        - method_type
+        - currency
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the payment method
+        method_type:
+          type: string
+          enum:
+            - bank_account
+            - pago_movil
+            - wire
+            - crypto_wallet
+            - fx_rail
+            - ach
+          description: Type of payment method
+        currency:
+          type: string
+          description: Currency code
+          example: VES
+        label:
+          type: string
+          nullable: true
+          description: Human-readable label for this payment method
+        details:
+          type: object
+          description: Method-specific details (bank_code, account_number, etc.)
+          additionalProperties: true
+          example:
+            bank_code: "0102"
+            account_number: "01020123456789"
+            account_type: "corriente"
+        verified:
+          type: boolean
+          description: Whether this payment method has been verified
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the payment method was verified
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this payment method was last used
+        counterparty:
+          type: object
+          nullable: true
+          description: Associated counterparty (for external payment methods)
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        tesote_account:
+          type: object
+          nullable: true
+          description: Associated Tesote account (for source payment methods)
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+          description: When the payment method was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the payment method was last updated
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error type or message
+          example: validation_error
+        message:
+          type: string
+          description: Human-readable error message
+          example: Amount must be greater than 0
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+          example:
+            field: amount
+            code: invalid
