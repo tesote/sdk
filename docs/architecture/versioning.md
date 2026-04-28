@@ -12,7 +12,7 @@ Two independent axes. Don't conflate.
 Every SDK exports all currently-supported API versions as named clients. Consumer chooses:
 
 ```ts
-import { V1Client, V2Client } from '@tesote/sdk'
+import { V1Client, V2Client } from '@tesote.com/sdk'
 const accounts = await new V2Client({ apiKey }).accounts.list()
 ```
 

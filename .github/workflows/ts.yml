@@ -1,39 +1,38 @@
 name: ts
 
+# why: workflow-level paths filter scopes runs to the TS package; the release
+# job gates on the package.json `version` field — first push to main with a
+# new version triggers npm publish + tag creation, subsequent pushes are
+# no-ops because the tag already exists.
+
 on:
   push:
     branches: [main]
-    tags: ['ts-v*']
+    paths:
+      - 'packages/ts/**'
+      - 'spec/**'
+      - '.github/workflows/ts.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'packages/ts/**'
+      - 'spec/**'
+      - '.github/workflows/ts.yml'
+
+permissions:
+  contents: read
 
 defaults:
   run:
     working-directory: packages/ts
 
 jobs:
-  detect:
-    runs-on: blacksmith-2vcpu-ubuntu-2204
-    outputs:
-      should_run: ${{ steps.filter.outputs.ts }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            ts:
-              - 'packages/ts/**'
-              - 'spec/**'
-
   test:
-    needs: detect
-    if: needs.detect.outputs.should_run == 'true'
     runs-on: blacksmith-2vcpu-ubuntu-2204
     strategy:
       fail-fast: false
       matrix:
-        node: [18, 20, 22]
+        node: [18, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,7 +46,8 @@ jobs:
       - run: npm test
 
   release:
-    if: startsWith(github.ref, 'refs/tags/ts-v')
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: blacksmith-2vcpu-ubuntu-2204
     permissions:
       id-token: write
@@ -56,29 +56,40 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
           cache: npm
           cache-dependency-path: packages/ts/package-lock.json
-      - run: npm ci
-      - name: Verify tag matches package.json version
+      - name: gate on version
+        id: gate
         run: |
-          tag="${GITHUB_REF#refs/tags/ts-v}"
-          pkg_version="$(node -p "require('./package.json').version")"
-          if [ "$tag" != "$pkg_version" ]; then
-            echo "Tag ts-v$tag does not match package.json version $pkg_version" >&2
-            exit 1
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="ts-v$version"
+          if git -C "$GITHUB_WORKSPACE" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "tag $tag already exists; skipping release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
           fi
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-      - name: Publish to npm (trusted publisher / OIDC)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - if: steps.gate.outputs.release == 'true'
+        run: npm ci
+      - if: steps.gate.outputs.release == 'true'
+        run: npm run build
+      - if: steps.gate.outputs.release == 'true'
+        name: publish to npm (OIDC trusted publisher)
         run: npm publish --provenance --access public
-      - name: Create GitHub Release
+      - if: steps.gate.outputs.release == 'true'
+        name: tag and GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: ${{ github.workspace }}
         run: |
-          gh release create "${GITHUB_REF#refs/tags/}" \
-            --title "@tesote/sdk ${GITHUB_REF#refs/tags/ts-v}" \
+          tag="${{ steps.gate.outputs.tag }}"
+          git tag "$tag"
+          git push origin "$tag"
+          gh release create "$tag" \
+            --title "@tesote.com/sdk ${{ steps.gate.outputs.version }}" \
             --generate-notes

@@ -1,5 +1,5 @@
 {
-  "name": "@tesote/sdk",
+  "name": "@tesote.com/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript SDK for the Tesote API (equipo.tesote.com).",
   "type": "module",
@@ -62,6 +62,6 @@
     "@types/node": "^22.0",
     "tsup": "^8.3",
     "typescript": "^5.6",
-    "vitest": "^2.1"
+    "vitest": "^3"
   }
 }

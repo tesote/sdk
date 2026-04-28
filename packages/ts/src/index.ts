@@ -1,10 +1,10 @@
 /**
- * @tesote/sdk — official TypeScript SDK for the Tesote API.
+ * @tesote.com/sdk — official TypeScript SDK for the Tesote API.
  *
  * Versioned clients ship side-by-side. Pick the version explicitly:
  *
  * ```ts
- * import { V1Client, V2Client } from '@tesote/sdk';
+ * import { V1Client, V2Client } from '@tesote.com/sdk';
  * const v2 = new V2Client({ apiKey: process.env.TESOTE_API_KEY! });
  * await v2.accounts.list();
  * ```

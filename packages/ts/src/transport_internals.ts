@@ -24,7 +24,7 @@ export const DEFAULT_RETRY_POLICY: RetryPolicy = {
 export function buildUserAgent(custom: string | undefined): string {
   if (custom !== undefined && custom.length > 0) return custom;
   const node = typeof process !== 'undefined' ? process.version : 'unknown';
-  return `@tesote/sdk-ts/${SDK_VERSION} (node/${node})`;
+  return `@tesote.com/sdk-ts/${SDK_VERSION} (node/${node})`;
 }
 
 export function classifyFetchError(err: unknown): NetworkError | TimeoutError | TlsError {

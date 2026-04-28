@@ -1,34 +1,52 @@
 # Release
 
-Per-language, tag-driven, automated. All jobs on **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`).
+Per-language, version-file-driven, automated. All jobs on **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`).
+
+## How a release happens
+
+1. Bump the version source file for the target language (table below).
+2. Update `<lang>/CHANGELOG.md`.
+3. Merge to `main`. The workflow detects the version change, publishes to the package manager, creates the tag, opens a GitHub Release.
+
+No manual `git tag`, no `gh release create` by hand, no `npm publish`. The workflow does it. Idempotent — if the tag already exists, the release job is a no-op.
+
+## Version source per language
+
+| Language   | Version source file                              | How the workflow reads it                                             |
+|------------|--------------------------------------------------|-----------------------------------------------------------------------|
+| TypeScript | `packages/ts/package.json` (`version`)           | `node -p "require('./package.json').version"`                         |
+| Python     | `packages/python/pyproject.toml` (`project.version`) | `python -c "import tomllib, pathlib; print(tomllib.loads(...).['project']['version'])"` |
+| Ruby       | `packages/ruby/lib/tesote_sdk/version.rb`        | `ruby -r ./lib/tesote_sdk/version.rb -e 'print TesoteSdk::VERSION'`   |
+| Java       | `packages/java/build.gradle.kts` (`version`)     | `grep -E '^version = ' build.gradle.kts \| sed -E 's/.*"([^"]+)".*/\1/'` |
+| PHP        | `packages/php/VERSION`                           | `tr -d '[:space:]' < VERSION`                                         |
+| Go         | `packages/go/version.go` (`const Version`)       | `grep -oE 'Version = "[^"]+"' version.go \| sed -E 's/.*"([^"]+)".*/\1/'` |
+
+Every language: bumping that file is what triggers a release. No tags pushed by humans.
 
 ## Tag scheme
 
-One tag namespace per language, semver: `ts-v1.4.2`, `python-v0.9.0`, `ruby-v2.0.0`, `java-v1.1.0`, `php-v0.5.3`, `go-v3.0.0`.
+One namespace per language, semver: `ts-v1.4.2`, `python-v0.9.0`, `ruby-v2.0.0`, `java-v1.1.0`, `php-v0.5.3`, `go-v3.0.0`. The release job creates the tag; `proxy.golang.org` and Packagist consume them. npm, PyPI, RubyGems, Maven Central use direct publish from the workflow.
 
-A tag triggers exactly one publish workflow. Languages release independently — TS at v1.4.2 while Python is at v0.9.0 is normal.
-
-Pre-release tags allowed: `ts-v1.5.0-rc.1`, `python-v1.0.0-beta.2`. Pre-releases publish to the registry's pre-release channel (npm `--tag next`, PyPI `pre-release` flag, etc.) — never as default install.
+Pre-release tags allowed: `ts-v1.5.0-rc.1`, `python-v1.0.0-beta.2`. Pre-releases publish to the registry's pre-release channel (npm `--tag next`, PyPI `pre-release` flag).
 
 ## Workflow files
 
 ```
 .github/workflows/
-├── ts.yml  python.yml  ruby.yml  java.yml  php.yml  go.yml   ← three jobs each: detect → test → release
+├── ts.yml  python.yml  ruby.yml  java.yml  php.yml  go.yml   ← two jobs each: test → release
 └── parity-check.yml                                          ← cross-language method/error parity (on PR)
 ```
 
-All `runs-on: blacksmith-2vcpu-ubuntu-2204`.
+### Two jobs per language
 
-### Three jobs per language
+| Job       | Trigger                                                          | Purpose                                                                                      |
+|-----------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| `test`    | push/PR matching workflow-level `paths:` filter                  | matrix across floor + latest LTS + current stable; lint, typecheck, unit + integration replay |
+| `release` | `needs: test`, `if: push to main`                                | reads version source, checks if `<lang>-v<version>` tag exists, publishes + tags + GH Release |
 
-| Job       | Trigger                                            | Purpose |
-|-----------|----------------------------------------------------|---------|
-| `detect`  | every push/PR                                      | `dorny/paths-filter@v3` outputs `should_run` if `packages/<lang>/**` or `spec/**` changed |
-| `test`    | `needs: detect`, `if: should_run`                  | unit + integration replay; matrix across supported language versions |
-| `release` | `if: startsWith(github.ref, 'refs/tags/<lang>-v')` | verify tag = manifest version, build, publish, GitHub Release |
+Path filtering happens **at the workflow level** — a PR touching only `packages/python/` doesn't even queue TS, Ruby, Java, PHP, Go. No separate `detect` job needed.
 
-`detect` is the gatekeeper — a PR touching only `packages/python/` doesn't run TS, Ruby, Java, PHP, Go tests. Saves Blacksmith minutes.
+The release job is **idempotent**: if the tag already exists (no version bump in this push), it short-circuits at the gate step.
 
 ## Trusted publishers (OIDC)
 
@@ -49,21 +67,7 @@ No `NPM_TOKEN`, no `RUBYGEMS_API_KEY`, no `PYPI_API_TOKEN` — registries verify
 | RubyGems | gem settings → OIDC                                         |
 | PyPI     | project settings → publishing → add trusted publisher       |
 
-Maven Central: Sonatype Central Portal user token (NOT legacy OSSRH) — token-based, no OIDC. Packagist: `PACKAGIST_TOKEN` — no OIDC. Go: tag push via proxy — no token, no OIDC.
-
-## Release checklist (codified, not manual)
-
-Each `<lang>-release.yml` runs in order:
-
-1. Checkout at the tag.
-2. Verify tag version matches the package manifest (`package.json`, `pyproject.toml`, `<gem>.gemspec`, `pom.xml`/`build.gradle`, `composer.json`, Go module path).
-3. Run full test suite (unit + replay; smoke is a separate gated job).
-4. Build artifacts.
-5. Publish: OIDC trusted publisher (npm/RubyGems/PyPI), Sonatype Central Portal token (Maven), `PACKAGIST_TOKEN` (PHP), tag push (Go).
-6. Create a GitHub Release with autogenerated changelog from commits since the previous `<lang>-v*` tag.
-7. Open PR to `tesote.com` updating the SDK doc page's version badge (gh CLI).
-
-A failed step halts the workflow — never publish a partial release.
+Maven Central: Sonatype Central Portal user token (NOT legacy OSSRH) — token-based, no OIDC. Packagist: GitHub webhook indexes new tags — no token in the workflow. Go: tag push via proxy — no token, no OIDC.
 
 ## Secrets
 
@@ -73,10 +77,9 @@ Stored in repo secrets (settings → secrets → actions):
 |---------------------------------------------------------|-----------------|
 | `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`      | java-release (Sonatype Central Portal user token, NOT legacy OSSRH) |
 | `MAVEN_GPG_KEY`, `MAVEN_GPG_PASSPHRASE`                 | java-release (artifact signing) |
-| `PACKAGIST_TOKEN`                                       | php-release |
-| `TESOTE_STAGING_API_KEY`                                | smoke tests |
+| `TESOTE_STAGING_API_KEY`                                | smoke tests     |
 
-npm/RubyGems/PyPI use OIDC — no secrets. Go publishes via tag push — no secret.
+npm / RubyGems / PyPI: OIDC — no secrets. Go: tag push — no secret. PHP / Packagist: webhook on tag push — no secret.
 
 Never echo secrets, never write to logs, never check into the repo.
 
@@ -90,4 +93,4 @@ Strict semver:
 
 Patch is per-language only. Minor and major land across all six in lockstep, gated by `parity-check.yml`.
 
-Changelog entries in `<lang>/CHANGELOG.md`. Release workflow appends a section per published version using commits since the prior tag.
+Changelog entries in `<lang>/CHANGELOG.md`. Release workflow uses commits since the prior `<lang>-v*` tag for the GitHub Release notes.

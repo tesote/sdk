@@ -3,70 +3,66 @@ name: java
 on:
   push:
     branches: [main]
-    tags: ['java-v*']
+    paths:
+      - 'packages/java/**'
+      - 'spec/**'
+      - '.github/workflows/java.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'packages/java/**'
+      - 'spec/**'
+      - '.github/workflows/java.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  detect:
-    runs-on: blacksmith-2vcpu-ubuntu-2204
-    outputs:
-      should_run: ${{ steps.filter.outputs.java }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            java:
-              - 'packages/java/**'
-              - 'spec/**'
-
   test:
-    needs: detect
-    if: needs.detect.outputs.should_run == 'true' || startsWith(github.ref, 'refs/tags/java-v')
     runs-on: blacksmith-2vcpu-ubuntu-2204
     strategy:
       fail-fast: false
       matrix:
-        java: ['17', '21']
+        java: ['17', '21', '25']
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Java ${{ matrix.java }}
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
-      - name: Run tests
+      - name: gradle test
         working-directory: packages/java
         run: ./gradlew test --no-daemon
 
   release:
-    if: startsWith(github.ref, 'refs/tags/java-v')
     needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: blacksmith-2vcpu-ubuntu-2204
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
-
-      - name: Verify tag matches build.gradle.kts version
+          java-version: '21'
+      - name: gate on version
+        id: gate
         working-directory: packages/java
         run: |
-          tag_version="${GITHUB_REF#refs/tags/java-v}"
-          gradle_version=$(grep -E '^version = ' build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ "$tag_version" != "$gradle_version" ]; then
-            echo "tag version ($tag_version) != build.gradle.kts version ($gradle_version)" >&2
-            exit 1
+          set -euo pipefail
+          version="$(grep -E '^version = ' build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')"
+          tag="java-v$version"
+          if git -C "$GITHUB_WORKSPACE" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "tag $tag already exists; skipping release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Build, sign, and publish to Sonatype Central Portal
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - if: steps.gate.outputs.release == 'true'
+        name: publish to Sonatype Central Portal
         working-directory: packages/java
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -74,12 +70,14 @@ jobs:
           MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         run: ./gradlew publishToCentralPortal --no-daemon
-
-      - name: Create GitHub Release
+      - if: steps.gate.outputs.release == 'true'
+        name: tag and GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
+          tag="${{ steps.gate.outputs.tag }}"
+          git tag "$tag"
+          git push origin "$tag"
           gh release create "$tag" \
-            --title "Java SDK ${tag#java-v}" \
+            --title "Java SDK ${{ steps.gate.outputs.version }}" \
             --generate-notes

@@ -8,7 +8,7 @@
 <h1 align="center">tesote-sdk</h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@tesote/sdk"><img alt="npm" src="https://img.shields.io/npm/v/@tesote/sdk?label=npm&color=cb3837"></a>
+  <a href="https://www.npmjs.com/package/@tesote.com/sdk"><img alt="npm" src="https://img.shields.io/npm/v/@tesote.com/sdk?label=npm&color=cb3837"></a>
   <a href="https://pypi.org/project/tesote-sdk/"><img alt="PyPI" src="https://img.shields.io/pypi/v/tesote-sdk?label=pypi&color=3776ab"></a>
   <a href="https://rubygems.org/gems/tesote-sdk"><img alt="Gem" src="https://img.shields.io/gem/v/tesote-sdk?label=rubygems&color=cc0000"></a>
   <a href="https://central.sonatype.com/artifact/com.tesote/sdk"><img alt="Maven Central" src="https://img.shields.io/maven-central/v/com.tesote/sdk?label=maven&color=c71a36"></a>
@@ -23,7 +23,7 @@ Official client SDKs for the [equipo.tesote.com](https://equipo.tesote.com) API.
 
 | Language | Package | Install |
 |----------|---------|---------|
-| TypeScript | [`@tesote/sdk`](https://www.npmjs.com/package/@tesote/sdk) | `npm i @tesote/sdk` |
+| TypeScript | [`@tesote.com/sdk`](https://www.npmjs.com/package/@tesote.com/sdk) | `npm i @tesote.com/sdk` |
 | Python | [`tesote-sdk`](https://pypi.org/project/tesote-sdk/) | `pip install tesote-sdk` |
 | Ruby | [`tesote-sdk`](https://rubygems.org/gems/tesote-sdk) | `gem install tesote-sdk` |
 | Java | `com.tesote:sdk` | Maven Central |
@@ -37,7 +37,7 @@ Full docs: **https://www.tesote.com/docs/sdk**
 ## Quick start
 
 ```ts
-import { V2Client } from '@tesote/sdk'
+import { V2Client } from '@tesote.com/sdk'
 
 const tesote = new V2Client({ apiKey: process.env.TESOTE_API_KEY! })
 const accounts = await tesote.accounts.list()
@@ -114,7 +114,7 @@ Get a key from your Tesote workspace settings. The SDK never persists it; it liv
 ## Errors
 
 ```ts
-import { RateLimitExceededError, WorkspaceSuspendedError } from '@tesote/sdk'
+import { RateLimitExceededError, WorkspaceSuspendedError } from '@tesote.com/sdk'
 
 try {
   await tesote.transactions.bulk(items)

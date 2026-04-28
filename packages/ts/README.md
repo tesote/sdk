@@ -1,4 +1,4 @@
-# @tesote/sdk
+# @tesote.com/sdk
 
 Official TypeScript SDK for the [Tesote API](https://www.tesote.com).
 
@@ -7,13 +7,13 @@ Zero runtime dependencies. Native `fetch`. Node 18+.
 ## Install
 
 ```sh
-npm install @tesote/sdk
+npm install @tesote.com/sdk
 ```
 
 ## Quick start
 
 ```ts
-import { V2Client } from '@tesote/sdk';
+import { V2Client } from '@tesote.com/sdk';
 
 const client = new V2Client({ apiKey: process.env.TESOTE_API_KEY! });
 
@@ -27,7 +27,7 @@ console.log(client.lastRateLimit);
 V1 and V2 clients ship side-by-side and are picked explicitly:
 
 ```ts
-import { V1Client, V2Client } from '@tesote/sdk';
+import { V1Client, V2Client } from '@tesote.com/sdk';
 ```
 
 ## Errors
@@ -37,7 +37,7 @@ Every error the SDK throws is a typed subclass of `TesoteError` and carries
 `responseBody`, `requestSummary`, and `attempts`.
 
 ```ts
-import { RateLimitExceededError } from '@tesote/sdk';
+import { RateLimitExceededError } from '@tesote.com/sdk';
 
 try {
   await client.accounts.list();

@@ -201,17 +201,11 @@ final class Transport
             );
         }
 
-        // why: unreachable in normal control flow, but the analyser needs a definite throw.
+        // why: every loop iteration either returns, continues, or throws; this is unreachable.
         if ($lastException !== null) {
             throw $lastException;
         }
-        throw ApiException::fromResponse(
-            $lastResult?->status ?? 0,
-            $lastResult?->body ?? '',
-            $lastResult?->headers ?? [],
-            $summary,
-            $this->maxAttempts,
-        );
+        throw new \LogicException('Transport loop exited without a result; should be unreachable');
     }
 
     /**

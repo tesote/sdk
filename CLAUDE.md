@@ -2,11 +2,11 @@
 
 Public monorepo for the official client SDKs of the **equipo.tesote.com** API. Greenfield — only `.idea/` exists today; the shape below is the contract for scaffolding.
 
-Repo name: `tesote-sdk`. npm uses scoped `@tesote/sdk`; other registries use `tesote-sdk`.
+Repo name: `tesote-sdk`. npm uses scoped `@tesote.com/sdk` (org `tesote.com`); other registries use `tesote-sdk`.
 
 | Language   | Folder             | Package name               | Min version | Registry         |
 |------------|--------------------|----------------------------|-------------|------------------|
-| TypeScript | `packages/ts/`     | `@tesote/sdk`              | Node 18     | npm              |
+| TypeScript | `packages/ts/`     | `@tesote.com/sdk`          | Node 18     | npm              |
 | Python     | `packages/python/` | `tesote-sdk`               | Python 3.9  | PyPI             |
 | Ruby       | `packages/ruby/`   | `tesote-sdk`               | Ruby 3.0    | RubyGems         |
 | Java       | `packages/java/`   | `com.tesote:sdk`           | Java 17     | Maven Central    |
@@ -66,13 +66,14 @@ One class per `error_code` (full table in [errors.md](docs/architecture/errors.m
 
 ## CI / release
 
-Runners: **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`). One workflow per language at `.github/workflows/<lang>.yml`, three jobs:
+Runners: **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`). One workflow per language at `.github/workflows/<lang>.yml`, **two jobs** gated by a workflow-level `paths:` filter (only the affected language runs):
 
-1. **`detect`** — `dorny/paths-filter@v3` sets `should_run` if `packages/<lang>/**` or `spec/**` changed. Other jobs `needs: detect`.
-2. **`test`** — unit + integration replay. Matrix across supported versions.
-3. **`release`** — `if: startsWith(github.ref, 'refs/tags/<lang>-v')`. Verify tag = manifest version, build, publish, GitHub Release.
+1. **`test`** — matrix across floor + latest LTS + current stable; lint + unit + integration replay.
+2. **`release`** — `needs: test`, runs on push to `main`. Reads the language's version source file; if a `<lang>-v<version>` tag does not yet exist, builds, publishes, creates the tag, opens a GitHub Release. Idempotent.
 
-Tags per-language so SDKs version independently. OIDC trusted publishers for npm/RubyGems/PyPI; Sonatype Central Portal user token for Maven; `PACKAGIST_TOKEN` for PHP; Go publishes via tag push (no token). See [release.md](docs/architecture/release.md).
+Bumping the version source file is what triggers a release. No human pushes tags. A Ruby-only patch (bump `lib/tesote_sdk/version.rb`) only fires `ruby.yml` because the path filter scopes the trigger.
+
+OIDC trusted publishers for npm/RubyGems/PyPI; Sonatype Central Portal user token for Maven; Packagist via GitHub webhook (no token); Go publishes via tag push (no token). See [release.md](docs/architecture/release.md).
 
 ## Documentation
 
@@ -86,7 +87,7 @@ End-user docs + API reference live at `../tesote.com` (`www.tesote.com/docs/sdk`
 - [resources.md](docs/architecture/resources.md) — endpoint inventory by version
 - [auth.md](docs/architecture/auth.md) — bearer-token rules
 - [testing.md](docs/architecture/testing.md) — unit / replay / smoke layers
-- [release.md](docs/architecture/release.md) — Blacksmith CI, tag-driven releases, OIDC
+- [release.md](docs/architecture/release.md) — Blacksmith CI, version-file-driven releases, OIDC
 
 ## Style
 

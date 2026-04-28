@@ -1,0 +1,165 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# CodeRabbit Configuration — Tesote SDK monorepo
+# Six client SDKs: TypeScript, Python, Ruby, Java, PHP, Go.
+# Public API surface — back-compat is permanent. Bias the reviewer toward
+# breaking-change detection, security, and cross-language parity.
+
+language: en-US
+early_access: true
+enable_free_tier: true
+
+tone_instructions: "Be concise and direct. Focus on bugs, security vulnerabilities, breaking changes to the public surface, and cross-language parity gaps. Skip nitpicks and style suggestions — each language has its own linter (biome, ruff, rubocop, golangci-lint, php-cs-fixer, gradle warnings). Only comment on code changed in this PR."
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  abort_on_close: true
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT REVIEW"
+      - "DRAFT"
+    drafts: false
+    base_branches:
+      - main
+
+  tools:
+    biome:
+      enabled: true
+    rubocop:
+      enabled: true
+    gitleaks:
+      enabled: true
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: false
+    github-checks:
+      enabled: true
+      timeout_ms: 900000
+
+  path_instructions:
+    - path: "packages/**/*"
+      instructions: |
+        - Public API surface — back-compat is permanent across v1, v2, etc.
+        - Removing or renaming a public symbol in any version is a breaking change. Flag it.
+        - New API versions (V3Client) are MINOR additions, not major bumps — purely additive.
+        - Errors must be typed (one class per error_code). No catch-all `ApiError`.
+        - Transport owns cross-cutting: pagination, retry+backoff, rate-limit awareness, ETag caching, idempotency keys, X-Request-Id propagation. Resource clients never reimplement these.
+        - Resource clients deserialize into typed model objects, not raw maps/dicts/hashes.
+        - No safe-navigation hiding nil (`&.`, `?.`, `?:`) — make nil explicit or refactor.
+        - Files under ~500 LOC; flag if a file is growing unbounded.
+
+    - path: "packages/ts/**/*.ts"
+      instructions: |
+        - Node 18 floor — no syntax/features younger than that. No experimental.
+        - Runtime deps: zero. Use `fetch` + standard Web APIs only. Flag any new runtime dep.
+        - Types: prefer `interface` for public model shapes; `type` for unions/aliases.
+        - No `any`. Biome enforces this — flag if disabled inline.
+
+    - path: "packages/python/**/*.py"
+      instructions: |
+        - Python 3.9 floor. No PEP 604 `X | Y` unions, no PEP 585 builtin generics in public types — use `typing.Optional[X]` and `List[X]`.
+        - Runtime deps: zero. Stdlib only (`urllib.request`, `json`). Flag any new runtime dep.
+        - Public models are `@dataclass`. Errors are subclasses of a typed base.
+        - mypy --strict — flag any `# type: ignore` without an issue ref.
+
+    - path: "packages/ruby/**/*.rb"
+      instructions: |
+        - Ruby 3.0 floor. No pattern-matching/etc syntax younger than that.
+        - Runtime deps: zero. `Net::HTTP` + `json` from stdlib only. Flag any new runtime dep.
+        - Public models are PORO classes (or `Struct`). Errors are subclasses of a typed base.
+        - rubocop runs in CI — don't suggest style fixes.
+
+    - path: "packages/java/**/*.java"
+      instructions: |
+        - Java 17 floor. Records preferred for value objects.
+        - Runtime deps: java.net.http + jackson-databind only. Flag any other dep.
+        - Errors are checked-or-unchecked subclasses of a typed base.
+        - `-Werror` enabled — javac warnings are build failures.
+
+    - path: "packages/php/**/*.php"
+      instructions: |
+        - PHP 8.1 floor. Use readonly classes with typed properties for models.
+        - Runtime deps: ext-curl + ext-json only. Flag any new composer require.
+        - PHPStan analysis is enforced — don't add `@phpstan-ignore` to silence errors; fix the underlying type.
+        - No `?->` nullsafe hiding — make nil explicit per CLAUDE.md style.
+
+    - path: "packages/go/**/*.go"
+      instructions: |
+        - Go 1.21 floor. No generics-heavy patterns where a plain interface suffices.
+        - Runtime deps: net/http + encoding/json only. Flag any go.mod additions.
+        - Errors are typed structs implementing the error interface; use errors.As/Is, never string-matching.
+        - golangci-lint runs in CI — don't suggest style fixes.
+
+    - path: "spec/**/*"
+      instructions: |
+        - Cross-language parity spec — any change here must land identical in all 6 packages or parity-check.yml fails.
+        - Flag PRs that touch spec/ but only modify one language under packages/.
+
+    - path: "**/CHANGELOG.md"
+      instructions: |
+        - One section per published version. Keep a Changelog format.
+        - Bumping the language's version source file (package.json, pyproject.toml, version.rb, build.gradle.kts, VERSION, version.go) is what triggers a release — verify the CHANGELOG entry matches the new version.
+
+    - path: ".github/workflows/**/*.yml"
+      instructions: |
+        - Two jobs per language: `test` (matrix) and `release` (gated on push to main + version-source change).
+        - Workflow-level `paths:` filter scopes triggers — touching only packages/python/ must not run TS/Ruby/Java/PHP/Go workflows.
+        - Release job must remain idempotent — re-running on the same version is a no-op (tag-existence guard).
+
+  path_filters:
+    # Exclusions
+    - "!**/node_modules/**"
+    - "!**/vendor/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/.gradle/**"
+    - "!**/coverage/**"
+    - "!**/__pycache__/**"
+    - "!**/*.pyc"
+    - "!**/package-lock.json"
+    - "!**/composer.lock"
+    - "!**/Gemfile.lock"
+    - "!**/go.sum"
+    # Inclusions
+    - "packages/**"
+    - "spec/**"
+    - "docs/**"
+    - "bin/**"
+    - ".github/**"
+    - "**/*.md"
+
+chat:
+  auto_reply: true
+  art: false
+
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "**/CLAUDE.md"
+      - "docs/architecture/**"
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
