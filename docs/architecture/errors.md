@@ -1,6 +1,6 @@
 # Errors
 
-Goal: a developer who catches an SDK error has everything they need to debug without re-running the request.
+A developer who catches an SDK error has everything to debug without re-running the request.
 
 ## API error envelope
 
@@ -13,23 +13,23 @@ Goal: a developer who catches an SDK error has everything they need to debug wit
 }
 ```
 
-The SDK parses this into a typed exception. `error_id`, `retry_after`, and any vendor-specific fields are preserved as attributes on the exception object.
+SDK parses this into a typed exception. `error_id`, `retry_after`, and any vendor fields preserved as attributes on the exception.
 
 ## Required fields on every error class
 
-| Field             | Source                          | Purpose |
-|-------------------|---------------------------------|---------|
-| `errorCode`       | `error_code` from envelope      | Programmatic dispatch |
-| `message`         | `error` from envelope (or synthesized) | Human display |
-| `httpStatus`      | HTTP response status            | Tier triage (4xx vs 5xx) |
-| `requestId`       | `X-Request-Id` response header  | Support ticket correlation |
-| `errorId`         | `error_id` from envelope        | Server log correlation |
-| `retryAfter`      | `Retry-After` header or envelope | Backoff hint |
-| `responseBody`    | Raw bytes/string                | Unexpected-shape debugging |
+| Field             | Source                                          | Purpose |
+|-------------------|-------------------------------------------------|---------|
+| `errorCode`       | `error_code` from envelope                      | Programmatic dispatch |
+| `message`         | `error` from envelope (or synthesized)          | Human display |
+| `httpStatus`      | HTTP response status                            | Tier triage (4xx vs 5xx) |
+| `requestId`       | `X-Request-Id` response header                  | Support ticket correlation |
+| `errorId`         | `error_id` from envelope                        | Server log correlation |
+| `retryAfter`      | `Retry-After` header or envelope                | Backoff hint |
+| `responseBody`    | Raw bytes/string                                | Unexpected-shape debugging |
 | `requestSummary`  | `{ method, path, query (redacted), bodyShape }` | Reproduce without secrets |
-| `attempts`        | Retry count when raised         | Distinguish transient vs persistent |
+| `attempts`        | Retry count when raised                         | Distinguish transient vs persistent |
 
-The bearer token is **never** included in `requestSummary` — redact to `Bearer <last4>` when serializing.
+Bearer token **never** in `requestSummary` — redact to `Bearer <last4>` when serializing.
 
 ## Class hierarchy
 
@@ -56,22 +56,22 @@ TesoteError                       (base; catch-all only as last resort)
 
 ## Naming across languages
 
-| Language | Convention |
-|----------|------------|
+| Language   | Convention |
+|------------|------------|
 | TypeScript | `RateLimitExceededError extends TesoteError` |
-| Python   | `RateLimitExceededError(TesoteError)` |
-| Ruby     | `TesoteSdk::RateLimitExceededError < TesoteSdk::Error` |
-| Java     | `RateLimitExceededException extends TesoteException` |
-| PHP      | `RateLimitExceededException extends TesoteException` |
-| Go       | sentinel + typed: `ErrRateLimitExceeded` and `*RateLimitExceededError` implementing `error`; use `errors.As` |
+| Python     | `RateLimitExceededError(TesoteError)` |
+| Ruby       | `TesoteSdk::RateLimitExceededError < TesoteSdk::Error` |
+| Java       | `RateLimitExceededException extends TesoteException` |
+| PHP        | `RateLimitExceededException extends TesoteException` |
+| Go         | sentinel + typed: `ErrRateLimitExceeded` and `*RateLimitExceededError` implementing `error`; use `errors.As` |
 
-Class names mirror across languages so the docs and stack traces are searchable.
+Class names mirror so docs and stack traces stay searchable.
 
-## What "good error" means in practice
+## "Good error" in practice
 
-A bad error message: `"422 Unprocessable Entity"`.
+Bad: `"422 Unprocessable Entity"`.
 
-A good error message:
+Good:
 
 ```
 RateLimitExceededError: 429 Too Many Requests
@@ -83,11 +83,11 @@ RateLimitExceededError: 429 Too Many Requests
   response: { "error": "Rate limit exceeded", "error_code": "RATE_LIMIT_EXCEEDED", "retry_after": 42 }
 ```
 
-The first line is greppable. The rest is everything you'd need to file a support ticket or reproduce the call.
+First line is greppable. Rest is everything to file a support ticket or reproduce the call.
 
-## Error-handling guidance for SDK code itself
+## Error-handling rules for SDK code
 
-- **Never** catch the language's base exception class (`Exception`, `Throwable`, `error`). Catch the narrowest type.
-- **Never** swallow an error to "make a method nicer." If a request fails, the caller hears about it.
-- Transport-level retries are the *only* place errors are caught and re-raised; everywhere else, let typed errors propagate.
-- When wrapping a lower-level exception (e.g. an HTTP-library `ConnectionError`), preserve it as `cause` / `__cause__` / `Unwrap()` — never lose the chain.
+- Never catch the language's base exception (`Exception`, `Throwable`, `error`). Catch the narrowest type.
+- Never swallow an error to "make a method nicer." Failed request → caller hears about it.
+- Transport-level retries are the only place errors are caught and re-raised; everywhere else, let typed errors propagate.
+- Wrapping a lower-level exception (e.g. HTTP-library `ConnectionError`): preserve as `cause` / `__cause__` / `Unwrap()`. Never lose the chain.

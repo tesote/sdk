@@ -1,37 +1,46 @@
 # Auth
 
-Single auth scheme: bearer API key.
+Single scheme: bearer API key.
 
 ```
 Authorization: Bearer <api_key>
 ```
 
-No OAuth, no HMAC signing, no session cookies. The SDK accepts the key at client construction:
+No OAuth, no HMAC signing, no session cookies. SDK accepts the key at client construction:
 
 ```ts
-new V3Client({ apiKey: process.env.TESOTE_API_KEY })
+new V3Client({ apiKey: '...' })             // explicit
+new V3Client()                              // falls back to env TESOTE_SDK_API_KEY
 ```
 
-If `apiKey` is missing or empty, raise `ConfigError` synchronously at construction — never let a half-built client make a request.
+Resolution order at construction: explicit `apiKey` arg → `TESOTE_SDK_API_KEY` env var → raise `ConfigError` synchronously. Never let a half-built client make a request.
+
+Per-language env-var read:
+- TS: `process.env.TESOTE_SDK_API_KEY`
+- Python: `os.environ.get('TESOTE_SDK_API_KEY')`
+- Ruby: `ENV['TESOTE_SDK_API_KEY']`
+- Java: `System.getenv("TESOTE_SDK_API_KEY")`
+- PHP: `getenv('TESOTE_SDK_API_KEY')`
+- Go: `os.Getenv("TESOTE_SDK_API_KEY")`
 
 ## Key types
 
-The platform tags API keys with an `access_type` (`general`, `odoo`, `sap`). Specialized keys require matching `User-Agent` substrings (`TesoteOdooConnector`, `TesoteSapConnector`). General keys must **not** carry those substrings.
+Platform tags API keys with `access_type` (`general`, `odoo`, `sap`). Specialized keys require matching `User-Agent` substrings (`TesoteOdooConnector`, `TesoteSapConnector`). General keys must **not** carry those substrings.
 
-The SDK ships only a `general` configuration: its default User-Agent is `tesote-sdk-<lang>/<sdk_version> (<runtime>)`. Consumers integrating from inside Odoo or SAP custom connectors set the User-Agent themselves via the `userAgent` option.
+SDK ships only `general` configuration: default User-Agent `tesote-sdk-<lang>/<sdk_version> (<runtime>)`. Consumers integrating from inside Odoo or SAP custom connectors set the User-Agent themselves via the `userAgent` option.
 
-> Note: the matching check is currently disabled server-side (see `ApiKeyAccessValidator`), but the SDK still respects the contract so it works the day enforcement is re-enabled.
+> Server-side matching is currently disabled (see `ApiKeyAccessValidator`); SDK still respects the contract for the day enforcement returns.
 
 ## Storage
 
-- The SDK never persists the API key.
-- The key is held in memory only on the client instance.
-- The key is never logged. Redact to `Bearer <last4>` in any log/error output.
+- SDK never persists the API key.
+- Held in memory only on the client instance.
+- Never logged. Redact to `Bearer <last4>` in any log/error output.
 
 ## Rotating keys
 
-Construct a new client with the new key. Existing clients keep using their old key until garbage-collected. Don't add a "rotateKey" method — it encourages mutable state in long-lived clients.
+Construct a new client with the new key. Existing clients keep using their old key until garbage-collected. No `rotateKey` method — that encourages mutable state in long-lived clients.
 
 ## Multi-workspace
 
-One API key is scoped to one workspace server-side. Multi-workspace consumers instantiate one client per workspace. The SDK does not provide a "workspace switcher" — that's caller orchestration.
+One API key = one workspace, server-side. Multi-workspace consumers instantiate one client per workspace. No "workspace switcher" — caller orchestration.

@@ -1,15 +1,15 @@
 # Versioning
 
-Two independent version axes. Don't conflate them.
+Two independent axes. Don't conflate.
 
-| Axis        | What it tracks                  | How it changes |
-|-------------|---------------------------------|----------------|
-| **API version** (v1, v2, v3) | URL prefix on the server (`/api/v3/...`); a coherent set of resources and semantics | Only the platform team bumps this; SDKs follow when a new version ships |
-| **SDK version** (semver per language) | Public surface of the SDK package | Bumped on every release; per language, independently |
+| Axis                                  | Tracks                                                                            | Changes                                              |
+|---------------------------------------|-----------------------------------------------------------------------------------|------------------------------------------------------|
+| **API version** (v1, v2, v3)          | URL prefix on the server (`/api/v3/...`); coherent set of resources and semantics | Platform team bumps; SDKs follow on new ship          |
+| **SDK version** (semver per language) | Public surface of the SDK package                                                 | Every release; per language, independently           |
 
 ## API versions ship side-by-side
 
-Every SDK exports all currently-supported API versions as named clients. The consumer chooses:
+Every SDK exports all currently-supported API versions as named clients. Consumer chooses:
 
 ```ts
 import { V1Client, V2Client, V3Client } from '@tesote/sdk'
@@ -36,42 +36,42 @@ import com.tesote.sdk.v3.V3Client;
 use Tesote\Sdk\V3\Client as V3Client;
 ```
 
-A consumer can mix versions in one process — call `V1Client.transactions.list()` for legacy code paths and `V3Client.webhooks.create()` for new ones, sharing nothing but the auth token.
+Mix versions in one process — `V1Client.transactions.list()` for legacy, `V3Client.webhooks.create()` for new, sharing only the auth token.
 
 ## What's in each version
 
-See [resources.md](resources.md) for the full per-resource inventory. Summary:
+Full per-resource inventory: [resources.md](resources.md).
 
 - **v1** — read-only: accounts, transactions
 - **v2** — v1 + sync sessions, transaction orders, batches, payment methods, bulk + search
 - **v3** — v2 + categories, counterparties, legal entities, connections, webhooks, reports, balance history, workspace, MCP
 
-Within each version, the SDK matches the API's endpoint surface 1:1 — no convenience methods that span versions.
+Within each version, SDK matches the API endpoint surface 1:1 — no convenience methods spanning versions.
 
 ## Back-compat policy
 
-**Removing or renaming a public symbol in any shipped API version is forbidden, in every language.** This includes:
+**Removing or renaming a public symbol in any shipped API version is forbidden, in every language.** Includes:
 
-- Removing a resource client (`V1Client.accounts` must exist forever).
+- Removing a resource client (`V1Client.accounts` exists forever).
 - Renaming a method, field, or enum value on a returned model.
-- Changing a method signature in a non-additive way (adding a required param = breaking; adding an optional param = OK).
+- Non-additive signature changes (new required param = breaking; new optional param = OK).
 - Tightening accepted input types.
 
-Allowed without a major bump:
+Allowed without major bump:
 
-- Adding new versioned clients (`V4Client` lands → minor bump).
-- Adding new resources, methods, or optional params to existing clients.
-- Adding new error subclasses (callers catching the parent class still work).
-- Internal refactors (transport, serialization) that preserve the public surface.
+- New versioned clients (`V4Client` lands → minor bump).
+- New resources, methods, optional params on existing clients.
+- New error subclasses (callers catching the parent still work).
+- Internal refactors preserving public surface.
 
 ## Deprecation
 
-When the platform marks an endpoint deprecated:
+Platform marks an endpoint deprecated:
 
 1. SDK keeps the method.
-2. SDK adds a runtime deprecation warning (language-idiomatic — `warnings.warn` in Python, `console.warn` in TS, etc.).
-3. README + the doc page on `tesote.com/docs/sdk` flag it.
-4. The method is **not** removed even when the upstream endpoint is removed — it then throws a typed `EndpointRemovedError` pointing at the replacement.
+2. Add a runtime deprecation warning (idiomatic — `warnings.warn` in Python, `console.warn` in TS, etc.).
+3. README + `tesote.com/docs/sdk` page flag it.
+4. Method is **not** removed when the upstream endpoint is removed — it throws a typed `EndpointRemovedError` pointing at the replacement.
 
 ## Spec snapshots
 
@@ -84,4 +84,4 @@ spec/
 └── v3.openapi.yaml      ← TODO: derive from v3 controllers; upstream lacks one
 ```
 
-Codegen reads from `spec/`, not from the live API. Bumping a snapshot is a deliberate PR with a changelog entry per affected language.
+Codegen reads from `spec/`, not the live API. Bumping a snapshot is a deliberate PR with a per-language changelog entry.
