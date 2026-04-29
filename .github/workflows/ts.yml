@@ -3,7 +3,9 @@ name: ts
 # why: workflow-level paths filter scopes runs to the TS package; the release
 # job gates on the package.json `version` field — first push to main with a
 # new version triggers npm publish + tag creation, subsequent pushes are
-# no-ops because the tag already exists.
+# no-ops because the tag already exists. The release step is idempotent so
+# retriggering on later commits (path-filter dropped, manual rerun, etc.) is
+# safe.
 
 on:
   push:

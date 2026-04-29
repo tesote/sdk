@@ -2,6 +2,38 @@
 
 All notable changes to `tesote-sdk` (Python) are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to semver per the monorepo's `docs/architecture/versioning.md`.
 
+## 0.2.0 - 2026-04-28
+
+### Added
+
+- Full v1 + v2 endpoint surface (35 endpoints). v1: `accounts.list/get`,
+  `transactions.list_for_account/get`, `status.status/whoami`. v2:
+  `accounts.list/get/sync`, `transactions.list_for_account/get/sync/sync_legacy/bulk/search/export`,
+  `sync_sessions.list/get`, `transaction_orders.list/get/create/submit/cancel`,
+  `batches.create/show/approve/submit/cancel`,
+  `payment_methods.list/get/create/update/delete`, `status.status/whoami`.
+- Frozen `@dataclass` models for every payload in `tesote_sdk.models`:
+  `Account`, `Transaction`, `SyncTransaction`, `SyncDelta`, `SyncResult`,
+  `SyncSession`, `TransactionOrder` (+ attempt / destination / source / fee),
+  `PaymentMethod`, `BatchSummary`, `BatchCreateResult`, `BatchApproveResult`,
+  `BatchSubmitResult`, `BatchCancelResult`, `AccountSyncStarted`,
+  `StatusResponse`, `WhoAmI`, plus list/cursor wrappers.
+- 20+ new typed exceptions mapped from `error_code`:
+  `AccountNotFoundError`, `TransactionNotFoundError`, `SyncSessionNotFoundError`,
+  `PaymentMethodNotFoundError`, `TransactionOrderNotFoundError`,
+  `BatchNotFoundError`, `BankConnectionNotFoundError`, `SyncInProgressError`,
+  `SyncRateLimitExceededError`, `BankUnderMaintenanceError`, `ValidationError`,
+  `BatchValidationError`, `InvalidOrderStateError`, `InvalidCursorError`,
+  `InvalidCountError`, `InvalidLimitError`, `InvalidQueryError`,
+  `MissingDateRangeError`, `BankSubmissionError`, `InternalError`,
+  `NotFoundError`.
+- Cursor- and offset-pagination iterators (`iter_*` generators) on every
+  list method.
+
+### Removed
+
+- `tesote_sdk/v2/_stubs.py` — every method is now wired end-to-end.
+
 ## 0.1.0 - 2026-04-28
 
 Initial scaffold.

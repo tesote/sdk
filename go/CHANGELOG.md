@@ -2,6 +2,36 @@
 
 All notable changes to this SDK are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 - 2026-04-28
+
+### Added
+
+- Full v1 + v2 endpoint surface (35 endpoints). v1: `accounts.List/Get`,
+  `transactions.ListForAccount/Get`, `status.Status/Whoami`. v2: `accounts.List/Get/Sync`,
+  `transactions.ListForAccount/Get/Sync/SyncLegacy/Bulk/Search/Export`,
+  `sync_sessions.List/Get`, `transaction_orders.List/Get/Create/Submit/Cancel`,
+  `batches.Create/Show/Approve/Submit/Cancel`,
+  `payment_methods.List/Get/Create/Update/Delete`, `status.Status/Whoami`.
+- Typed model structs in `models.go` for every payload: `Account`, `Transaction`,
+  `SyncTransaction`, `SyncResult`, `SyncSession`, `TransactionOrder`,
+  `PaymentMethod`, `BatchSummary`, plus envelope and pagination types — all
+  with `json:"snake_case"` tags.
+- 21 new typed errors mapped from `error_code`: `*AccountNotFoundError`,
+  `*TransactionNotFoundError`, `*SyncSessionNotFoundError`,
+  `*PaymentMethodNotFoundError`, `*TransactionOrderNotFoundError`,
+  `*BatchNotFoundError`, `*BankConnectionNotFoundError`, `*InvalidCursorError`,
+  `*InvalidCountError`, `*InvalidLimitError`, `*InvalidQueryError`,
+  `*MissingDateRangeError`, `*SyncInProgressError`, `*SyncRateLimitExceededError`,
+  `*BankUnderMaintenanceError`, `*ValidationError`, `*InvalidOrderStateError`,
+  `*BankSubmissionError`, `*BatchValidationError`, `*InternalError`, plus
+  `Err*` sentinels for each.
+- `Transport.RequestRaw` for non-JSON responses (CSV/JSON export).
+
+### Changed
+
+- All `ErrNotImplemented` returns replaced with real implementations across
+  `v1` and `v2` packages.
+
 ## 0.1.1 - 2026-04-28
 
 ### Changed
