@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Account model (v1 + v2 — identical wire shape). */
-final readonly class Account
+final class Account
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public AccountData $data,
-        public Bank $bank,
-        public ?LegalEntity $legalEntity,
-        public string $tesoteCreatedAt,
-        public string $tesoteUpdatedAt,
+        public readonly string $id,
+        public readonly string $name,
+        public readonly AccountData $data,
+        public readonly Bank $bank,
+        public readonly ?LegalEntity $legalEntity,
+        public readonly string $tesoteCreatedAt,
+        public readonly string $tesoteUpdatedAt,
     ) {
     }
 

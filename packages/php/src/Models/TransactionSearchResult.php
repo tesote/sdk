@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /v2/transactions/search. */
-final readonly class TransactionSearchResult
+final class TransactionSearchResult
 {
     /**
      * @param list<Transaction> $transactions
      */
     public function __construct(
-        public array $transactions,
-        public int $total,
+        public readonly array $transactions,
+        public readonly int $total,
     ) {
     }
 

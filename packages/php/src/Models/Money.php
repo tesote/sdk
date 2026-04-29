@@ -10,11 +10,11 @@ namespace Tesote\Sdk\Models;
  * Amount stored as string for decimal-safety (matches the wire). Callers that
  * need numeric comparison should parse with bcmath / ext-decimal.
  */
-final readonly class Money
+final class Money
 {
     public function __construct(
-        public string $amount,
-        public string $currency,
+        public readonly string $amount,
+        public readonly string $currency,
     ) {
     }
 

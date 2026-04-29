@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Transaction.transaction_categories[] entry. */
-final readonly class TransactionCategory
+final class TransactionCategory
 {
     public function __construct(
-        public string $name,
-        public ?string $externalCategoryCode,
-        public string $createdAt,
-        public string $updatedAt,
+        public readonly string $name,
+        public readonly ?string $externalCategoryCode,
+        public readonly string $createdAt,
+        public readonly string $updatedAt,
     ) {
     }
 

@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /v2/accounts/{id}/sync_sessions. */
-final readonly class SyncSessionList
+final class SyncSessionList
 {
     /**
      * @param list<SyncSession> $syncSessions
      */
     public function __construct(
-        public array $syncSessions,
-        public int $limit,
-        public int $offset,
-        public bool $hasMore,
+        public readonly array $syncSessions,
+        public readonly int $limit,
+        public readonly int $offset,
+        public readonly bool $hasMore,
     ) {
     }
 

@@ -8,24 +8,24 @@ namespace Tesote\Sdk\Models;
  * SyncTransaction — flattened, Plaid-compatible shape used by the
  * /v2/.../transactions/sync endpoints. Distinct from Transaction.
  */
-final readonly class SyncTransaction
+final class SyncTransaction
 {
     /**
      * @param list<string> $category
      */
     public function __construct(
-        public string $transactionId,
-        public string $accountId,
-        public float $amount,
-        public string $isoCurrencyCode,
-        public ?string $unofficialCurrencyCode,
-        public string $date,
-        public ?string $datetime,
-        public string $name,
-        public ?string $merchantName,
-        public bool $pending,
-        public array $category,
-        public ?int $runningBalanceCents,
+        public readonly string $transactionId,
+        public readonly string $accountId,
+        public readonly float $amount,
+        public readonly string $isoCurrencyCode,
+        public readonly ?string $unofficialCurrencyCode,
+        public readonly string $date,
+        public readonly ?string $datetime,
+        public readonly string $name,
+        public readonly ?string $merchantName,
+        public readonly bool $pending,
+        public readonly array $category,
+        public readonly ?int $runningBalanceCents,
     ) {
     }
 

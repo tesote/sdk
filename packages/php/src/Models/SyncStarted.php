@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response envelope returned by POST /v2/accounts/{id}/sync (202 Accepted). */
-final readonly class SyncStarted
+final class SyncStarted
 {
     public function __construct(
-        public string $message,
-        public string $syncSessionId,
-        public string $status,
-        public string $startedAt,
+        public readonly string $message,
+        public readonly string $syncSessionId,
+        public readonly string $status,
+        public readonly string $startedAt,
     ) {
     }
 

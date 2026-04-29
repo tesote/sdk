@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Cursor pagination block (used by transactions index endpoints). */
-final readonly class CursorPagination
+final class CursorPagination
 {
     public function __construct(
-        public bool $hasMore,
-        public int $perPage,
-        public ?string $afterId,
-        public ?string $beforeId,
+        public readonly bool $hasMore,
+        public readonly int $perPage,
+        public readonly ?string $afterId,
+        public readonly ?string $beforeId,
     ) {
     }
 

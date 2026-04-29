@@ -10,18 +10,18 @@ namespace Tesote\Sdk\Models;
  * Each endpoint returns a slightly different mix of counters, kept on a single
  * value object so callers can branch on whichever fields are populated.
  */
-final readonly class BatchActionResult
+final class BatchActionResult
 {
     /**
      * @param list<array<string, mixed>> $errors
      */
     public function __construct(
-        public ?int $approved,
-        public ?int $enqueued,
-        public ?int $cancelled,
-        public ?int $skipped,
-        public ?int $failed,
-        public array $errors,
+        public readonly ?int $approved,
+        public readonly ?int $enqueued,
+        public readonly ?int $cancelled,
+        public readonly ?int $skipped,
+        public readonly ?int $failed,
+        public readonly array $errors,
     ) {
     }
 

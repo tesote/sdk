@@ -11,16 +11,16 @@ namespace Tesote\Sdk\Models;
  * balanceCents / availableBalanceCents only present when the workspace allows
  * balance display. Returned as strings on the wire (decimal-safe).
  */
-final readonly class AccountData
+final class AccountData
 {
     public function __construct(
-        public ?string $maskedAccountNumber,
-        public ?string $currency,
-        public ?string $transactionsDataCurrentAsOf,
-        public ?string $balanceDataCurrentAsOf,
-        public ?string $customUserProvidedIdentifier,
-        public ?string $balanceCents,
-        public ?string $availableBalanceCents,
+        public readonly ?string $maskedAccountNumber,
+        public readonly ?string $currency,
+        public readonly ?string $transactionsDataCurrentAsOf,
+        public readonly ?string $balanceDataCurrentAsOf,
+        public readonly ?string $customUserProvidedIdentifier,
+        public readonly ?string $balanceCents,
+        public readonly ?string $availableBalanceCents,
     ) {
     }
 

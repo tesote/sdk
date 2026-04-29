@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** TransactionOrder.destination — beneficiary identifiers. */
-final readonly class Destination
+final class Destination
 {
     public function __construct(
-        public string $paymentMethodId,
-        public ?string $counterpartyId,
-        public ?string $counterpartyName,
+        public readonly string $paymentMethodId,
+        public readonly ?string $counterpartyId,
+        public readonly ?string $counterpartyName,
     ) {
     }
 

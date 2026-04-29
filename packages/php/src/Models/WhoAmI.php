@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /whoami and GET /v2/whoami. */
-final readonly class WhoAmI
+final class WhoAmI
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public string $type,
+        public readonly string $id,
+        public readonly string $name,
+        public readonly string $type,
     ) {
     }
 

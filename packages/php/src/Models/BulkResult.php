@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from POST /v2/transactions/bulk. */
-final readonly class BulkResult
+final class BulkResult
 {
     /**
      * @param list<BulkAccountResult> $bulkResults
      */
     public function __construct(
-        public array $bulkResults,
+        public readonly array $bulkResults,
     ) {
     }
 

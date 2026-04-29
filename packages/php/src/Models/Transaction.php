@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Transaction (v1 schema — also returned by GET /v2/transactions/{id}). */
-final readonly class Transaction
+final class Transaction
 {
     /**
      * @param list<TransactionCategory> $transactionCategories
      */
     public function __construct(
-        public string $id,
-        public string $status,
-        public TransactionData $data,
-        public string $tesoteImportedAt,
-        public string $tesoteUpdatedAt,
-        public array $transactionCategories,
-        public ?Counterparty $counterparty,
+        public readonly string $id,
+        public readonly string $status,
+        public readonly TransactionData $data,
+        public readonly string $tesoteImportedAt,
+        public readonly string $tesoteUpdatedAt,
+        public readonly array $transactionCategories,
+        public readonly ?Counterparty $counterparty,
     ) {
     }
 

@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /v2/accounts/{id}/batches/{batch_id}. */
-final readonly class BatchSummary
+final class BatchSummary
 {
     /**
      * @param array<string, int>     $statuses
      * @param list<TransactionOrder> $orders
      */
     public function __construct(
-        public string $batchId,
-        public int $totalOrders,
-        public int $totalAmountCents,
-        public string $amountCurrency,
-        public array $statuses,
-        public string $batchStatus,
-        public string $createdAt,
-        public array $orders,
+        public readonly string $batchId,
+        public readonly int $totalOrders,
+        public readonly int $totalAmountCents,
+        public readonly string $amountCurrency,
+        public readonly array $statuses,
+        public readonly string $batchStatus,
+        public readonly string $createdAt,
+        public readonly array $orders,
     ) {
     }
 

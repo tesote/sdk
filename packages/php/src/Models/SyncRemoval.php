@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Entry in the `removed` array from the /v2/transactions/sync response. */
-final readonly class SyncRemoval
+final class SyncRemoval
 {
     public function __construct(
-        public string $transactionId,
-        public string $accountId,
+        public readonly string $transactionId,
+        public readonly string $accountId,
     ) {
     }
 

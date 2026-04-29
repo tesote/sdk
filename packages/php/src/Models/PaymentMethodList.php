@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /v2/payment_methods. */
-final readonly class PaymentMethodList
+final class PaymentMethodList
 {
     /**
      * @param list<PaymentMethod> $items
      */
     public function __construct(
-        public array $items,
-        public bool $hasMore,
-        public int $limit,
-        public int $offset,
+        public readonly array $items,
+        public readonly bool $hasMore,
+        public readonly int $limit,
+        public readonly int $offset,
     ) {
     }
 

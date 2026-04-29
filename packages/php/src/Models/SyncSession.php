@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** SyncSession (one row from /v2/accounts/{id}/sync_sessions). */
-final readonly class SyncSession
+final class SyncSession
 {
     /**
      * @param array{type: string, message: string}|null                                          $error
      * @param array{total_duration: float, complexity_score: float, sync_speed_score: float}|null $performance
      */
     public function __construct(
-        public string $id,
-        public string $status,
-        public string $startedAt,
-        public ?string $completedAt,
-        public int $transactionsSynced,
-        public int $accountsCount,
-        public ?array $error,
-        public ?array $performance,
+        public readonly string $id,
+        public readonly string $status,
+        public readonly string $startedAt,
+        public readonly ?string $completedAt,
+        public readonly int $transactionsSynced,
+        public readonly int $accountsCount,
+        public readonly ?array $error,
+        public readonly ?array $performance,
     ) {
     }
 

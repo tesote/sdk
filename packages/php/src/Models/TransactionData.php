@@ -10,18 +10,18 @@ namespace Tesote\Sdk\Models;
  * runningBalanceCents only present when the workspace has running-balance
  * display enabled and the caller opted in.
  */
-final readonly class TransactionData
+final class TransactionData
 {
     public function __construct(
-        public int $amountCents,
-        public string $currency,
-        public string $description,
-        public string $transactionDate,
-        public ?string $createdAt,
-        public ?string $createdAtDate,
-        public ?string $note,
-        public ?string $externalServiceId,
-        public ?int $runningBalanceCents,
+        public readonly int $amountCents,
+        public readonly string $currency,
+        public readonly string $description,
+        public readonly string $transactionDate,
+        public readonly ?string $createdAt,
+        public readonly ?string $createdAtDate,
+        public readonly ?string $note,
+        public readonly ?string $externalServiceId,
+        public readonly ?int $runningBalanceCents,
     ) {
     }
 

@@ -5,32 +5,32 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** TransactionOrder model (v2). */
-final readonly class TransactionOrder
+final class TransactionOrder
 {
     public function __construct(
-        public string $id,
-        public string $status,
-        public string $amount,
-        public string $currency,
-        public string $description,
-        public ?string $reference,
-        public ?string $externalReference,
-        public ?string $idempotencyKey,
-        public ?string $batchId,
-        public ?string $scheduledFor,
-        public ?string $approvedAt,
-        public ?string $submittedAt,
-        public ?string $completedAt,
-        public ?string $failedAt,
-        public ?string $cancelledAt,
-        public SourceAccount $sourceAccount,
-        public Destination $destination,
-        public ?Money $fee,
-        public ?string $executionStrategy,
-        public ?TesoteTransactionRef $tesoteTransaction,
-        public ?TransactionOrderAttempt $latestAttempt,
-        public string $createdAt,
-        public string $updatedAt,
+        public readonly string $id,
+        public readonly string $status,
+        public readonly string $amount,
+        public readonly string $currency,
+        public readonly string $description,
+        public readonly ?string $reference,
+        public readonly ?string $externalReference,
+        public readonly ?string $idempotencyKey,
+        public readonly ?string $batchId,
+        public readonly ?string $scheduledFor,
+        public readonly ?string $approvedAt,
+        public readonly ?string $submittedAt,
+        public readonly ?string $completedAt,
+        public readonly ?string $failedAt,
+        public readonly ?string $cancelledAt,
+        public readonly SourceAccount $sourceAccount,
+        public readonly Destination $destination,
+        public readonly ?Money $fee,
+        public readonly ?string $executionStrategy,
+        public readonly ?TesoteTransactionRef $tesoteTransaction,
+        public readonly ?TransactionOrderAttempt $latestAttempt,
+        public readonly string $createdAt,
+        public readonly string $updatedAt,
     ) {
     }
 

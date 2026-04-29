@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /v1/accounts and GET /v2/accounts. */
-final readonly class AccountList
+final class AccountList
 {
     /**
      * @param list<Account> $accounts
      */
     public function __construct(
-        public int $total,
-        public array $accounts,
-        public PagePagination $pagination,
+        public readonly int $total,
+        public readonly array $accounts,
+        public readonly PagePagination $pagination,
     ) {
     }
 

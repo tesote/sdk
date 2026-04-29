@@ -5,24 +5,24 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** PaymentMethod (v2). details is type-specific so kept as a generic map. */
-final readonly class PaymentMethod
+final class PaymentMethod
 {
     /**
      * @param array<string, mixed> $details
      */
     public function __construct(
-        public string $id,
-        public string $methodType,
-        public string $currency,
-        public ?string $label,
-        public array $details,
-        public bool $verified,
-        public ?string $verifiedAt,
-        public ?string $lastUsedAt,
-        public ?Counterparty $counterparty,
-        public ?TesoteAccountRef $tesoteAccount,
-        public string $createdAt,
-        public string $updatedAt,
+        public readonly string $id,
+        public readonly string $methodType,
+        public readonly string $currency,
+        public readonly ?string $label,
+        public readonly array $details,
+        public readonly bool $verified,
+        public readonly ?string $verifiedAt,
+        public readonly ?string $lastUsedAt,
+        public readonly ?Counterparty $counterparty,
+        public readonly ?TesoteAccountRef $tesoteAccount,
+        public readonly string $createdAt,
+        public readonly string $updatedAt,
     ) {
     }
 

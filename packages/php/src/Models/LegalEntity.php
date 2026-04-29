@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Account.legal_entity — owning legal entity (id and legal_name may be null). */
-final readonly class LegalEntity
+final class LegalEntity
 {
     public function __construct(
-        public ?string $id,
-        public ?string $legalName,
+        public readonly ?string $id,
+        public readonly ?string $legalName,
     ) {
     }
 

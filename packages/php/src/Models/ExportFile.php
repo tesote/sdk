@@ -11,12 +11,12 @@ namespace Tesote\Sdk\Models;
  * `format` echoes back the requested format. `filename` reflects the server's
  * Content-Disposition suggestion (or null if the SDK couldn't parse it).
  */
-final readonly class ExportFile
+final class ExportFile
 {
     public function __construct(
-        public string $body,
-        public string $format,
-        public ?string $filename,
+        public readonly string $body,
+        public readonly string $format,
+        public readonly ?string $filename,
     ) {
     }
 }

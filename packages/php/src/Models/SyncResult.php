@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Result envelope returned by POST /v2/.../transactions/sync. */
-final readonly class SyncResult
+final class SyncResult
 {
     /**
      * @param list<SyncTransaction> $added
@@ -13,11 +13,11 @@ final readonly class SyncResult
      * @param list<SyncRemoval>     $removed
      */
     public function __construct(
-        public array $added,
-        public array $modified,
-        public array $removed,
-        public ?string $nextCursor,
-        public bool $hasMore,
+        public readonly array $added,
+        public readonly array $modified,
+        public readonly array $removed,
+        public readonly ?string $nextCursor,
+        public readonly bool $hasMore,
     ) {
     }
 

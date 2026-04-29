@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Page-based pagination block (used by accounts list endpoints). */
-final readonly class PagePagination
+final class PagePagination
 {
     public function __construct(
-        public int $currentPage,
-        public int $perPage,
-        public int $totalPages,
-        public int $totalCount,
+        public readonly int $currentPage,
+        public readonly int $perPage,
+        public readonly int $totalPages,
+        public readonly int $totalCount,
     ) {
     }
 

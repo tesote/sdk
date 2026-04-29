@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from GET /status and GET /v2/status. */
-final readonly class StatusInfo
+final class StatusInfo
 {
     public function __construct(
-        public string $status,
-        public bool $authenticated,
+        public readonly string $status,
+        public readonly bool $authenticated,
     ) {
     }
 

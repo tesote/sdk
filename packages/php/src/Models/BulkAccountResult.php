@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** One row from the bulk_results array of POST /v2/transactions/bulk. */
-final readonly class BulkAccountResult
+final class BulkAccountResult
 {
     /**
      * @param list<Transaction> $transactions
      */
     public function __construct(
-        public string $accountId,
-        public array $transactions,
-        public CursorPagination $pagination,
+        public readonly string $accountId,
+        public readonly array $transactions,
+        public readonly CursorPagination $pagination,
     ) {
     }
 

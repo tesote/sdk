@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** TransactionOrder.tesote_transaction — reference to the underlying ledger transaction. */
-final readonly class TesoteTransactionRef
+final class TesoteTransactionRef
 {
     public function __construct(
-        public string $id,
-        public string $status,
+        public readonly string $id,
+        public readonly string $status,
     ) {
     }
 

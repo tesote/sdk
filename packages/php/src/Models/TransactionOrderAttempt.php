@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** TransactionOrder.latest_attempt — most-recent execution attempt summary. */
-final readonly class TransactionOrderAttempt
+final class TransactionOrderAttempt
 {
     public function __construct(
-        public string $id,
-        public string $status,
-        public int $attemptNumber,
-        public ?string $externalReference,
-        public ?string $submittedAt,
-        public ?string $completedAt,
-        public ?string $errorCode,
-        public ?string $errorMessage,
+        public readonly string $id,
+        public readonly string $status,
+        public readonly int $attemptNumber,
+        public readonly ?string $externalReference,
+        public readonly ?string $submittedAt,
+        public readonly ?string $completedAt,
+        public readonly ?string $errorCode,
+        public readonly ?string $errorMessage,
     ) {
     }
 

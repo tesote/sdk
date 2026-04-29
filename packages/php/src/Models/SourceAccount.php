@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** TransactionOrder.source_account — the account funding the order. */
-final readonly class SourceAccount
+final class SourceAccount
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public string $paymentMethodId,
+        public readonly string $id,
+        public readonly string $name,
+        public readonly string $paymentMethodId,
     ) {
     }
 

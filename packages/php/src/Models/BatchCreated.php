@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tesote\Sdk\Models;
 
 /** Response from POST /v2/accounts/{id}/batches. */
-final readonly class BatchCreated
+final class BatchCreated
 {
     /**
      * @param list<TransactionOrder>     $orders
      * @param list<array<string, mixed>> $errors
      */
     public function __construct(
-        public string $batchId,
-        public array $orders,
-        public array $errors,
+        public readonly string $batchId,
+        public readonly array $orders,
+        public readonly array $errors,
     ) {
     }
 
