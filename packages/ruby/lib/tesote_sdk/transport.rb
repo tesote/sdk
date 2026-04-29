@@ -110,6 +110,47 @@ module TesoteSdk
     def request(method, path, query: nil, body: nil, opts: {})
       method_upper = method.to_s.upcase
       uri = build_uri(path, query)
+      execute_request(method_upper, uri, body, opts)
+    end
+
+    # why: GET /status and GET /whoami live at the API root, not under
+    # /v1 or /v2 — bypass the version_segment but reuse all cross-cutting.
+    def request_unversioned(method, path, query: nil, body: nil, opts: {})
+      method_upper = method.to_s.upcase
+      uri = build_unversioned_uri(path, query)
+      execute_request(method_upper, uri, body, opts)
+    end
+
+    # Returns a RawResponse with body string + headers — used for file-download
+    # endpoints (CSV/JSON export) where the SDK should not parse the body.
+    RawResponse = Struct.new(:status, :body, :content_type, :content_disposition, :request_id, keyword_init: true)
+
+    def request_raw(method, path, query: nil, body: nil, opts: {})
+      method_upper = method.to_s.upcase
+      uri = build_uri(path, query)
+      request_summary = build_request_summary(method_upper, uri, body)
+      response, body_str, attempts = perform_with_retries(method_upper, uri, body, opts, request_summary)
+
+      record_rate_limit(response)
+      @last_request_id = response['x-request-id'] || response['X-Request-Id']
+      status = response.code.to_i
+
+      if status >= 200 && status < 300
+        return RawResponse.new(
+          status: status,
+          body: body_str,
+          content_type: response['content-type'] || response['Content-Type'],
+          content_disposition: response['content-disposition'] || response['Content-Disposition'],
+          request_id: @last_request_id
+        )
+      end
+
+      raise ApiError.from_response(response, body_str, request_summary, attempts: attempts)
+    end
+
+    private
+
+    def execute_request(method_upper, uri, body, opts)
       cache_key = cache_key_for(method_upper, uri, opts)
       cached = cache_lookup(method_upper, cache_key, opts)
       return cached unless cached.nil?
@@ -131,14 +172,21 @@ module TesoteSdk
       raise ApiError.from_response(response, body_str, request_summary, attempts: attempts)
     end
 
-    private
-
     def default_user_agent
       "tesote-sdk-rb/#{TesoteSdk::VERSION} (ruby/#{RUBY_VERSION})"
     end
 
     def build_uri(path, query)
       joined = "#{base_url}/#{version_segment}/#{path.to_s.sub(%r{\A/+}, '')}"
+      uri = URI.parse(joined)
+      if query && !query.empty?
+        uri.query = URI.encode_www_form(stringify_query(query))
+      end
+      uri
+    end
+
+    def build_unversioned_uri(path, query)
+      joined = "#{base_url}/#{path.to_s.sub(%r{\A/+}, '')}"
       uri = URI.parse(joined)
       if query && !query.empty?
         uri.query = URI.encode_www_form(stringify_query(query))
