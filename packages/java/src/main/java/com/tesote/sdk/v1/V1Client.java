@@ -10,17 +10,22 @@ import java.util.function.Consumer;
 /**
  * v1 client. Read-only foundation: status, accounts, transactions.
  *
- * <p>0.1.0 ships the builder + transport plumbing; resource methods stub until
- * they're wired in subsequent commits per the back-compat policy in
- * {@code docs/architecture/versioning.md}.
+ * <p>Each accessor returns the same instance for the lifetime of the client.
+ * The client is thread-safe; share it.
  */
 public final class V1Client {
     static final String VERSION_PATH = "/v1";
 
     private final Transport transport;
+    private final StatusClient status;
+    private final AccountsClient accounts;
+    private final TransactionsClient transactions;
 
     private V1Client(Builder b) {
         this.transport = b.transportBuilder.build();
+        this.status = new StatusClient(this.transport);
+        this.accounts = new AccountsClient(this.transport);
+        this.transactions = new TransactionsClient(this.transport);
     }
 
     public static Builder builder() {
@@ -29,9 +34,9 @@ public final class V1Client {
 
     public Transport transport() { return transport; }
 
-    public Object status() { throw new UnsupportedOperationException("not implemented"); }
-    public Object accounts() { throw new UnsupportedOperationException("not implemented"); }
-    public Object transactions() { throw new UnsupportedOperationException("not implemented"); }
+    public StatusClient status() { return status; }
+    public AccountsClient accounts() { return accounts; }
+    public TransactionsClient transactions() { return transactions; }
 
     public static final class Builder {
         private final Transport.Builder transportBuilder = Transport.builder();

@@ -9,7 +9,7 @@ language: en-US
 early_access: true
 enable_free_tier: true
 
-tone_instructions: "Be concise and direct. Focus on bugs, security vulnerabilities, breaking changes to the public surface, and cross-language parity gaps. Skip nitpicks and style suggestions — each language has its own linter (biome, ruff, rubocop, golangci-lint, php-cs-fixer, gradle warnings). Only comment on code changed in this PR."
+tone_instructions: "Be concise. Focus on bugs, security issues, breaking public-surface changes, and cross-language parity gaps. Skip style/nitpicks — each language has its own linter. Only comment on code changed in this PR."
 
 reviews:
   profile: chill

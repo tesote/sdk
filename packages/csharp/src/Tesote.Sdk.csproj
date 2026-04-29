@@ -16,7 +16,7 @@
 
   <PropertyGroup>
     <PackageId>Tesote.Sdk</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Tesote</Authors>
     <Company>Tesote</Company>
     <Description>Official C# / .NET SDK for the equipo.tesote.com API.</Description>

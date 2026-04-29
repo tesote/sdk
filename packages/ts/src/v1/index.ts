@@ -26,5 +26,14 @@ export class V1Client {
 export { V1AccountsClient } from './accounts.js';
 export { V1TransactionsClient } from './transactions.js';
 export { V1StatusClient } from './status.js';
-export type { Account, AccountListParams, AccountListResponse } from './accounts.js';
-export type { Transaction } from './transactions.js';
+export type {
+  Account,
+  AccountListParams,
+  AccountListResponse,
+  PageBasedPagination,
+} from './accounts.js';
+export type {
+  Transaction,
+  TransactionListParams,
+  TransactionListResponse,
+} from './transactions.js';

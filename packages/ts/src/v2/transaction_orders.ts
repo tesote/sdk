@@ -1,37 +1,121 @@
+import type {
+  Beneficiary,
+  TransactionOrder,
+  TransactionOrderListResponse,
+  TransactionOrderStatus,
+} from '../models/transaction_order.js';
 import type { Transport } from '../transport.js';
 
+export interface TransactionOrderListParams {
+  limit?: number;
+  offset?: number;
+  status?: TransactionOrderStatus;
+  created_after?: string;
+  created_before?: string;
+  batch_id?: string;
+}
+
+export interface TransactionOrderCreateInput {
+  destination_payment_method_id?: string | null;
+  beneficiary?: Beneficiary;
+  amount: string;
+  currency: string;
+  description: string;
+  scheduled_for?: string | null;
+  idempotency_key?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TransactionOrderSubmitOptions {
+  /** Token (e.g. MFA/OTP) some banks require. */
+  token?: string | null;
+  /** Idempotency key for the submit request itself. */
+  idempotencyKey?: string;
+}
+
 export class V2TransactionOrdersClient {
-  constructor(private readonly _transport: Transport) {}
+  constructor(private readonly transport: Transport) {}
 
-  async list(_accountId: string, _params: Record<string, unknown> = {}): Promise<unknown> {
-    throw new Error('not implemented');
+  /** GET /v2/accounts/{id}/transaction_orders */
+  async list(
+    accountId: string,
+    params: TransactionOrderListParams = {},
+  ): Promise<TransactionOrderListResponse> {
+    const res = await this.transport.request<TransactionOrderListResponse>({
+      method: 'GET',
+      path: `/v2/accounts/${encodeURIComponent(accountId)}/transaction_orders`,
+      query: { ...params },
+    });
+    return res.data;
   }
 
-  async get(_accountId: string, _orderId: string): Promise<unknown> {
-    throw new Error('not implemented');
+  async *listAll(
+    accountId: string,
+    params: TransactionOrderListParams = {},
+  ): AsyncGenerator<TransactionOrder, void, void> {
+    let offset = params.offset ?? 0;
+    const limit = params.limit ?? 50;
+    while (true) {
+      const page = await this.list(accountId, { ...params, limit, offset });
+      for (const order of page.items) yield order;
+      if (!page.has_more) return;
+      offset += page.items.length;
+    }
   }
 
+  /** GET /v2/accounts/{id}/transaction_orders/{order_id} */
+  async get(accountId: string, orderId: string): Promise<TransactionOrder> {
+    const res = await this.transport.request<TransactionOrder>({
+      method: 'GET',
+      path: `/v2/accounts/${encodeURIComponent(accountId)}/transaction_orders/${encodeURIComponent(orderId)}`,
+    });
+    return res.data;
+  }
+
+  /** POST /v2/accounts/{id}/transaction_orders */
   async create(
-    _accountId: string,
-    _body: Record<string, unknown>,
-    _opts: { idempotencyKey?: string } = {},
-  ): Promise<unknown> {
-    throw new Error('not implemented');
+    accountId: string,
+    body: TransactionOrderCreateInput,
+    opts: { idempotencyKey?: string } = {},
+  ): Promise<TransactionOrder> {
+    const res = await this.transport.request<TransactionOrder>({
+      method: 'POST',
+      path: `/v2/accounts/${encodeURIComponent(accountId)}/transaction_orders`,
+      body: { transaction_order: body },
+      ...(opts.idempotencyKey !== undefined ? { idempotencyKey: opts.idempotencyKey } : {}),
+    });
+    return res.data;
   }
 
+  /** POST /v2/accounts/{id}/transaction_orders/{order_id}/submit */
   async submit(
-    _accountId: string,
-    _orderId: string,
-    _opts: { idempotencyKey?: string } = {},
-  ): Promise<unknown> {
-    throw new Error('not implemented');
+    accountId: string,
+    orderId: string,
+    opts: TransactionOrderSubmitOptions = {},
+  ): Promise<TransactionOrder> {
+    const body: Record<string, unknown> = {};
+    if (opts.token !== undefined) body.token = opts.token;
+    const res = await this.transport.request<TransactionOrder>({
+      method: 'POST',
+      path: `/v2/accounts/${encodeURIComponent(accountId)}/transaction_orders/${encodeURIComponent(orderId)}/submit`,
+      body,
+      ...(opts.idempotencyKey !== undefined ? { idempotencyKey: opts.idempotencyKey } : {}),
+    });
+    return res.data;
   }
 
+  /** POST /v2/accounts/{id}/transaction_orders/{order_id}/cancel */
   async cancel(
-    _accountId: string,
-    _orderId: string,
-    _opts: { idempotencyKey?: string } = {},
-  ): Promise<unknown> {
-    throw new Error('not implemented');
+    accountId: string,
+    orderId: string,
+    opts: { idempotencyKey?: string } = {},
+  ): Promise<TransactionOrder> {
+    const res = await this.transport.request<TransactionOrder>({
+      method: 'POST',
+      path: `/v2/accounts/${encodeURIComponent(accountId)}/transaction_orders/${encodeURIComponent(orderId)}/cancel`,
+      body: {},
+      ...(opts.idempotencyKey !== undefined ? { idempotencyKey: opts.idempotencyKey } : {}),
+    });
+    return res.data;
   }
 }

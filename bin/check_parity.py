@@ -105,12 +105,15 @@ def check_language(lang_cfg: dict, manifest: dict) -> LanguageReport:
     source = collect_source(lang_dir, lang_cfg["extensions"])
     case = lang_cfg["method_case"]
     suffix = lang_cfg["class_suffix"]
+    async_suffix = lang_cfg.get("async_suffix", "")
 
     # --- methods ---
     for version, vcfg in manifest["versions"].items():
         for resource, rcfg in vcfg["resources"].items():
             for method in rcfg["methods"]:
                 spellings = method_variants(method, case)
+                if async_suffix:
+                    spellings = spellings + [s + async_suffix for s in spellings]
                 if not any(re.search(rf"\b{re.escape(s)}\b", source) for s in spellings):
                     report.missing_methods.append(f"{version}.{resource}.{method}")
 

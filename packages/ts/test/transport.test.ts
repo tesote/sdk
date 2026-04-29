@@ -53,7 +53,7 @@ describe('Transport — bearer + headers', () => {
     const headers = new Headers(calls[0]?.init.headers as HeadersInit);
     expect(headers.get('authorization')).toBe('Bearer sk_test_abcd1234');
     expect(headers.get('accept')).toBe('application/json');
-    expect(headers.get('user-agent')).toMatch(/^@tesote\.com\/sdk-ts\/0\.1\.1 \(node\//);
+    expect(headers.get('user-agent')).toMatch(/^@tesote\.com\/sdk-ts\/0\.2\.0 \(node\//);
   });
 
   it('hits the default base URL when none provided', async () => {

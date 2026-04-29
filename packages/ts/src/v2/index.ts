@@ -42,3 +42,24 @@ export { V2TransactionOrdersClient } from './transaction_orders.js';
 export { V2BatchesClient } from './batches.js';
 export { V2PaymentMethodsClient } from './payment_methods.js';
 export { V2StatusClient } from './status.js';
+
+export type {
+  V2TransactionListParams,
+  V2TransactionExportParams,
+  ExportResponse,
+  SyncRequestOptions,
+  BulkRequest,
+  SearchParams,
+} from './transactions.js';
+export type { SyncSessionListParams } from './sync_sessions.js';
+export type {
+  TransactionOrderListParams,
+  TransactionOrderCreateInput,
+  TransactionOrderSubmitOptions,
+} from './transaction_orders.js';
+export type { BatchOrderInput, BatchCreateInput } from './batches.js';
+export type {
+  PaymentMethodListParams,
+  PaymentMethodCreateInput,
+  PaymentMethodUpdateInput,
+} from './payment_methods.js';

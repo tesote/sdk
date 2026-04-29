@@ -4,6 +4,51 @@ All notable changes to the `com.tesote:sdk` artifact are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 - 2026-04-28
+
+### Added
+
+- Full v1 + v2 resource layer. All 35 endpoints from the controller spec
+  are implemented; no `UnsupportedOperationException` placeholders remain.
+- v1 resource clients: `StatusClient` (status, whoami), `AccountsClient`
+  (list, get), `TransactionsClient` (listForAccount, get).
+- v2 resource clients: `StatusClient`, `AccountsClient` (+ `sync`),
+  `TransactionsClient` (listForAccount, get, sync, syncLegacy, bulk,
+  search, export), `SyncSessionsClient`, `TransactionOrdersClient`
+  (list, get, create, submit, cancel), `BatchesClient` (create, show,
+  approve, submit, cancel), `PaymentMethodsClient` (list, get, create,
+  update, delete).
+- Java records for every API model: `Account`, `Transaction`,
+  `SyncTransaction`, `SyncSession`, `TransactionOrder`, `PaymentMethod`,
+  `BatchSummary`, `Status`, `Whoami`, plus paginated wrappers
+  (`PagePagination`, `CursorPagination`, `OffsetPage<T>`,
+  `AccountsPage`, `TransactionsPage`, `SyncSessionsPage`) and request /
+  response envelopes.
+- New typed exceptions, one per API `error_code`: `AccountNotFoundException`,
+  `TransactionNotFoundException`, `SyncSessionNotFoundException`,
+  `PaymentMethodNotFoundException`, `TransactionOrderNotFoundException`,
+  `BatchNotFoundException`, `BankConnectionNotFoundException`,
+  `CategoryNotFoundException`, `CounterpartyNotFoundException`,
+  `LegalEntityNotFoundException`, `WebhookNotFoundException`
+  (all subclasses of new `NotFoundException`); `ValidationException`,
+  `BatchValidationException`, `BankSubmissionException`;
+  `InvalidCursorException`, `InvalidCountException`,
+  `InvalidLimitException`, `InvalidQueryException`,
+  `MissingDateRangeException`; `InvalidOrderStateException`,
+  `SyncInProgressException`, `SyncRateLimitExceededException`,
+  `BankUnderMaintenanceException`, `InternalErrorException`.
+- `Transport.requestRaw(...)` for file-download endpoints (CSV / JSON
+  export); `Transport.Options.jsonBody(Object)` and `query(Map)` helpers.
+- Unit tests for every resource client (mocked via `MockWebServer`) plus
+  expanded error-dispatcher coverage.
+
+### Changed
+
+- `Content-Type: application/json` is now sent on every POST/PUT/PATCH,
+  even when the body is empty, matching the spec's 415 contract.
+- `V1Client` / `V2Client` accessors (`accounts()`, `transactions()`, etc.)
+  now return live resource clients instead of `UnsupportedOperationException`.
+
 ## 0.1.1 - 2026-04-28
 
 ### Changed

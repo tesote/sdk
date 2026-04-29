@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tesote\Sdk\V2;
 
-use Tesote\Sdk\NotImplemented;
 use Tesote\Sdk\Transport;
 
 /**
@@ -15,12 +14,12 @@ final class Client
 {
     public readonly Transport $transport;
     public readonly Accounts $accounts;
-    public readonly NotImplemented $transactions;
-    public readonly NotImplemented $syncSessions;
-    public readonly NotImplemented $transactionOrders;
-    public readonly NotImplemented $batches;
-    public readonly NotImplemented $paymentMethods;
-    public readonly NotImplemented $status;
+    public readonly Transactions $transactions;
+    public readonly SyncSessions $syncSessions;
+    public readonly TransactionOrders $transactionOrders;
+    public readonly Batches $batches;
+    public readonly PaymentMethods $paymentMethods;
+    public readonly Status $status;
 
     /**
      * @param array<string, mixed> $config See Transport::__construct.
@@ -29,11 +28,11 @@ final class Client
     {
         $this->transport = $config['transport'] ?? new Transport($config);
         $this->accounts = new Accounts($this->transport);
-        $this->transactions = new NotImplemented('transactions');
-        $this->syncSessions = new NotImplemented('sync_sessions');
-        $this->transactionOrders = new NotImplemented('transaction_orders');
-        $this->batches = new NotImplemented('batches');
-        $this->paymentMethods = new NotImplemented('payment_methods');
-        $this->status = new NotImplemented('status');
+        $this->transactions = new Transactions($this->transport);
+        $this->syncSessions = new SyncSessions($this->transport);
+        $this->transactionOrders = new TransactionOrders($this->transport);
+        $this->batches = new Batches($this->transport);
+        $this->paymentMethods = new PaymentMethods($this->transport);
+        $this->status = new Status($this->transport);
     }
 }

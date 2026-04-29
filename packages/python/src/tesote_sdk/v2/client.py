@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from .._base_client import build_transport
+from ..models import StatusResponse, WhoAmI
 from ..transport import (
     DEFAULT_BASE_URL,
     DEFAULT_CONNECT_TIMEOUT,
@@ -14,15 +15,13 @@ from ..transport import (
     RetryPolicy,
     Transport,
 )
-from ._stubs import (
-    BatchesResource,
-    PaymentMethodsResource,
-    StatusResource,
-    SyncSessionsResource,
-    TransactionOrdersResource,
-    TransactionsResource,
-)
 from .accounts import AccountsResource
+from .batches import BatchesResource
+from .payment_methods import PaymentMethodsResource
+from .status import StatusResource
+from .sync_sessions import SyncSessionsResource
+from .transaction_orders import TransactionOrdersResource
+from .transactions import TransactionsResource
 
 
 class V2Client:
@@ -65,6 +64,12 @@ class V2Client:
     @property
     def last_rate_limit(self) -> object:
         return self._transport.last_rate_limit
+
+    def status(self) -> StatusResponse:
+        return self.status_resource.status()
+
+    def whoami(self) -> WhoAmI:
+        return self.status_resource.whoami()
 
 
 __all__ = ["V2Client"]

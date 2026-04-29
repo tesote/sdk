@@ -246,8 +246,14 @@ export class Transport {
         });
 
         if (res.status >= 200 && res.status < 300) {
-          const data = (safeJsonParse(text) ?? null) as T;
-          await this.afterSuccess(args, text, res.headers.get('content-type'));
+          const contentType = res.headers.get('content-type');
+          const isJson = contentType?.includes('application/json') === true;
+          // why: non-JSON success bodies (CSV exports, file downloads) must come
+          // back as the raw text — JSON parsing them would silently coerce to null.
+          const data = (
+            isJson ? (safeJsonParse(text) ?? null) : text.length > 0 ? text : null
+          ) as T;
+          await this.afterSuccess(args, text, contentType);
           return { status: res.status, headers: res.headers, data, requestId, rateLimit };
         }
 

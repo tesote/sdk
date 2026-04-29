@@ -2,7 +2,7 @@
 
 Official PHP client SDK for the [equipo.tesote.com](https://equipo.tesote.com) API.
 
-Status: 0.1.0 — unreleased. v2 `accounts.list` / `accounts.get` are wired; everything else is stubbed and throws `LogicException`.
+Status: 0.2.0 — full v1 + v2 surface (35 endpoints) wired with typed model objects and one exception class per `error_code`.
 
 ## Install
 
@@ -22,9 +22,9 @@ $client = new Client([
     'apiKey' => getenv('TESOTE_API_KEY'),
 ]);
 
-$accounts = $client->accounts->list(['limit' => 50]);
-foreach ($accounts['data'] as $account) {
-    echo $account['id'], "\n";
+$accounts = $client->accounts->list(['per_page' => 50]);
+foreach ($accounts->accounts as $account) {
+    echo $account->id, "\n";
 }
 ```
 
@@ -43,7 +43,7 @@ Pick a version explicitly. `V1` stays shipped indefinitely.
 new V2Client([
     'apiKey'           => '...',                           // required
     'baseUrl'          => 'https://equipo.tesote.com/api', // default
-    'userAgent'        => 'tesote-sdk-php/0.1.0 (php/8.x)', // override for Odoo/SAP connectors
+    'userAgent'        => 'tesote-sdk-php/0.2.0 (php/8.x)', // override for Odoo/SAP connectors
     'maxAttempts'      => 3,                               // retries on 429/5xx + transient network
     'baseDelayMs'      => 250,
     'maxDelayMs'       => 8000,

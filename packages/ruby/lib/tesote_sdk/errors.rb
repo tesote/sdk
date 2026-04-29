@@ -126,26 +126,95 @@ module TesoteSdk
     end
   end
 
+  # 401
   class UnauthorizedError < ApiError; end
   class ApiKeyRevokedError < ApiError; end
+
+  # 403
   class WorkspaceSuspendedError < ApiError; end
   class AccountDisabledError < ApiError; end
   class HistorySyncForbiddenError < ApiError; end
+
+  # 404
+  class NotFoundError < ApiError; end
+  class AccountNotFoundError < NotFoundError; end
+  class TransactionNotFoundError < NotFoundError; end
+  class SyncSessionNotFoundError < NotFoundError; end
+  class PaymentMethodNotFoundError < NotFoundError; end
+  class TransactionOrderNotFoundError < NotFoundError; end
+  class BatchNotFoundError < NotFoundError; end
+  class CategoryNotFoundError < NotFoundError; end
+  class CounterpartyNotFoundError < NotFoundError; end
+  class LegalEntityNotFoundError < NotFoundError; end
+  class WebhookNotFoundError < NotFoundError; end
+  class BankConnectionNotFoundError < NotFoundError; end
+
+  # 409
   class MutationDuringPaginationError < ApiError; end
+  class SyncInProgressError < ApiError; end
+  class InvalidOrderStateError < ApiError; end
+
+  # 422 / 400
   class UnprocessableContentError < ApiError; end
   class InvalidDateRangeError < ApiError; end
+  class MissingDateRangeError < ApiError; end
+  class InvalidCursorError < ApiError; end
+  class InvalidCountError < ApiError; end
+  class InvalidLimitError < ApiError; end
+  class InvalidQueryError < ApiError; end
+  class ValidationError < ApiError; end
+  class BatchValidationError < ApiError; end
+  class BankSubmissionError < ApiError; end
+
+  # 429
   class RateLimitExceededError < ApiError; end
+  class SyncRateLimitExceededError < ApiError; end
+
+  # 500
+  class InternalServerError < ApiError; end
+
+  # 503
   class ServiceUnavailableError < ApiError; end
+  class BankUnderMaintenanceError < ServiceUnavailableError; end
 
   ApiError.register('UNAUTHORIZED', UnauthorizedError)
   ApiError.register('API_KEY_REVOKED', ApiKeyRevokedError)
   ApiError.register('WORKSPACE_SUSPENDED', WorkspaceSuspendedError)
   ApiError.register('ACCOUNT_DISABLED', AccountDisabledError)
   ApiError.register('HISTORY_SYNC_FORBIDDEN', HistorySyncForbiddenError)
+
+  ApiError.register('ACCOUNT_NOT_FOUND', AccountNotFoundError)
+  ApiError.register('TRANSACTION_NOT_FOUND', TransactionNotFoundError)
+  ApiError.register('SYNC_SESSION_NOT_FOUND', SyncSessionNotFoundError)
+  ApiError.register('PAYMENT_METHOD_NOT_FOUND', PaymentMethodNotFoundError)
+  ApiError.register('TRANSACTION_ORDER_NOT_FOUND', TransactionOrderNotFoundError)
+  ApiError.register('BATCH_NOT_FOUND', BatchNotFoundError)
+  ApiError.register('CATEGORY_NOT_FOUND', CategoryNotFoundError)
+  ApiError.register('COUNTERPARTY_NOT_FOUND', CounterpartyNotFoundError)
+  ApiError.register('LEGAL_ENTITY_NOT_FOUND', LegalEntityNotFoundError)
+  ApiError.register('WEBHOOK_NOT_FOUND', WebhookNotFoundError)
+  ApiError.register('BANK_CONNECTION_NOT_FOUND', BankConnectionNotFoundError)
+
   ApiError.register('MUTATION_CONFLICT', MutationDuringPaginationError)
+  ApiError.register('SYNC_IN_PROGRESS', SyncInProgressError)
+  ApiError.register('INVALID_ORDER_STATE', InvalidOrderStateError)
+
   ApiError.register('UNPROCESSABLE_CONTENT', UnprocessableContentError)
   ApiError.register('INVALID_DATE_RANGE', InvalidDateRangeError)
+  ApiError.register('MISSING_DATE_RANGE', MissingDateRangeError)
+  ApiError.register('INVALID_CURSOR', InvalidCursorError)
+  ApiError.register('INVALID_COUNT', InvalidCountError)
+  ApiError.register('INVALID_LIMIT', InvalidLimitError)
+  ApiError.register('INVALID_QUERY', InvalidQueryError)
+  ApiError.register('VALIDATION_ERROR', ValidationError)
+  ApiError.register('BATCH_VALIDATION_ERROR', BatchValidationError)
+  ApiError.register('BANK_SUBMISSION_ERROR', BankSubmissionError)
+
   ApiError.register('RATE_LIMIT_EXCEEDED', RateLimitExceededError)
+  ApiError.register('SYNC_RATE_LIMIT_EXCEEDED', SyncRateLimitExceededError)
+
+  ApiError.register('INTERNAL_ERROR', InternalServerError)
+  ApiError.register('BANK_UNDER_MAINTENANCE', BankUnderMaintenanceError)
 
   # Transport-level failures: no usable HTTP response.
   class TransportError < Error; end

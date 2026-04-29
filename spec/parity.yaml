@@ -59,3 +59,4 @@ languages:
   - { dir: java,   method_case: camel,  class_suffix: Exception, extensions: [java] }
   - { dir: php,    method_case: camel,  class_suffix: Exception, extensions: [php] }
   - { dir: go,     method_case: pascal, class_suffix: Error,     extensions: [go] }
+  - { dir: csharp, method_case: pascal, class_suffix: Exception, extensions: [cs], async_suffix: Async }

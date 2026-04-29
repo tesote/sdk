@@ -1,6 +1,11 @@
 require_relative '../transport'
 require_relative 'accounts'
-require_relative 'stubs'
+require_relative 'transactions'
+require_relative 'sync_sessions'
+require_relative 'transaction_orders'
+require_relative 'batches'
+require_relative 'payment_methods'
+require_relative 'status'
 
 module TesoteSdk
   module V2

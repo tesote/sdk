@@ -80,16 +80,54 @@ export class TesoteError extends Error {
 /** Server returned a structured API error. */
 export class ApiError extends TesoteError {}
 
+// 401
 export class UnauthorizedError extends ApiError {}
 export class ApiKeyRevokedError extends ApiError {}
+
+// 403
 export class WorkspaceSuspendedError extends ApiError {}
 export class AccountDisabledError extends ApiError {}
 export class HistorySyncForbiddenError extends ApiError {}
+
+// 404
+export class NotFoundError extends ApiError {}
+export class AccountNotFoundError extends NotFoundError {}
+export class TransactionNotFoundError extends NotFoundError {}
+export class SyncSessionNotFoundError extends NotFoundError {}
+export class PaymentMethodNotFoundError extends NotFoundError {}
+export class TransactionOrderNotFoundError extends NotFoundError {}
+export class BatchNotFoundError extends NotFoundError {}
+export class BankConnectionNotFoundError extends NotFoundError {}
+
+// 409
 export class MutationDuringPaginationError extends ApiError {}
+export class InvalidOrderStateError extends ApiError {}
+export class SyncInProgressError extends ApiError {}
+
+// 422
 export class UnprocessableContentError extends ApiError {}
 export class InvalidDateRangeError extends ApiError {}
+export class InvalidCursorError extends ApiError {}
+export class InvalidCountError extends ApiError {}
+export class InvalidLimitError extends ApiError {}
+export class InvalidQueryError extends ApiError {}
+export class MissingDateRangeError extends ApiError {}
+export class BankSubmissionError extends ApiError {}
+
+// 400
+export class ValidationError extends ApiError {}
+export class BatchValidationError extends ApiError {}
+
+// 429
 export class RateLimitExceededError extends ApiError {}
+export class SyncRateLimitExceededError extends ApiError {}
+
+// 503
 export class ServiceUnavailableError extends ApiError {}
+export class BankUnderMaintenanceError extends ApiError {}
+
+// 500
+export class InternalServerError extends ApiError {}
 
 /** Transport-level failure: no usable HTTP response. */
 export class TransportError extends TesoteError {}
@@ -110,36 +148,64 @@ interface ApiErrorEnvelope {
   retry_after?: number;
 }
 
-const ERROR_CODE_MAP: Record<
-  string,
-  new (
-    f: Partial<TesoteErrorFields> & Pick<TesoteErrorFields, 'errorCode' | 'message'>,
-  ) => ApiError
-> = {
+type ApiErrorCtor = new (
+  f: Partial<TesoteErrorFields> & Pick<TesoteErrorFields, 'errorCode' | 'message'>,
+) => ApiError;
+
+const ERROR_CODE_MAP: Record<string, ApiErrorCtor> = {
+  // 401
   UNAUTHORIZED: UnauthorizedError,
   API_KEY_REVOKED: ApiKeyRevokedError,
+  // 403
   WORKSPACE_SUSPENDED: WorkspaceSuspendedError,
   ACCOUNT_DISABLED: AccountDisabledError,
   HISTORY_SYNC_FORBIDDEN: HistorySyncForbiddenError,
+  // 404
+  ACCOUNT_NOT_FOUND: AccountNotFoundError,
+  TRANSACTION_NOT_FOUND: TransactionNotFoundError,
+  SYNC_SESSION_NOT_FOUND: SyncSessionNotFoundError,
+  PAYMENT_METHOD_NOT_FOUND: PaymentMethodNotFoundError,
+  TRANSACTION_ORDER_NOT_FOUND: TransactionOrderNotFoundError,
+  BATCH_NOT_FOUND: BatchNotFoundError,
+  BANK_CONNECTION_NOT_FOUND: BankConnectionNotFoundError,
+  // 409
   MUTATION_CONFLICT: MutationDuringPaginationError,
+  INVALID_ORDER_STATE: InvalidOrderStateError,
+  SYNC_IN_PROGRESS: SyncInProgressError,
+  // 422
   UNPROCESSABLE_CONTENT: UnprocessableContentError,
   INVALID_DATE_RANGE: InvalidDateRangeError,
+  INVALID_CURSOR: InvalidCursorError,
+  INVALID_COUNT: InvalidCountError,
+  INVALID_LIMIT: InvalidLimitError,
+  INVALID_QUERY: InvalidQueryError,
+  MISSING_DATE_RANGE: MissingDateRangeError,
+  BANK_SUBMISSION_ERROR: BankSubmissionError,
+  // 400
+  VALIDATION_ERROR: ValidationError,
+  BATCH_VALIDATION_ERROR: BatchValidationError,
+  // 429
   RATE_LIMIT_EXCEEDED: RateLimitExceededError,
+  SYNC_RATE_LIMIT_EXCEEDED: SyncRateLimitExceededError,
+  // 503
+  BANK_UNDER_MAINTENANCE: BankUnderMaintenanceError,
+  // 500
+  INTERNAL_ERROR: InternalServerError,
 };
 
 function pickStatusFallback(httpStatus: number): {
-  cls: new (
-    f: Partial<TesoteErrorFields> & Pick<TesoteErrorFields, 'errorCode' | 'message'>,
-  ) => ApiError;
+  cls: ApiErrorCtor;
   errorCode: string;
 } {
   if (httpStatus === 401) return { cls: UnauthorizedError, errorCode: 'UNAUTHORIZED' };
   if (httpStatus === 403) return { cls: ApiError, errorCode: 'FORBIDDEN' };
+  if (httpStatus === 404) return { cls: NotFoundError, errorCode: 'NOT_FOUND' };
   if (httpStatus === 409)
     return { cls: MutationDuringPaginationError, errorCode: 'MUTATION_CONFLICT' };
   if (httpStatus === 422)
     return { cls: UnprocessableContentError, errorCode: 'UNPROCESSABLE_CONTENT' };
   if (httpStatus === 429) return { cls: RateLimitExceededError, errorCode: 'RATE_LIMIT_EXCEEDED' };
+  if (httpStatus === 500) return { cls: InternalServerError, errorCode: 'INTERNAL_ERROR' };
   if (httpStatus === 503) return { cls: ServiceUnavailableError, errorCode: 'SERVICE_UNAVAILABLE' };
   return { cls: ApiError, errorCode: `HTTP_${httpStatus}` };
 }
@@ -178,9 +244,7 @@ function envelopeFrom(parsed: unknown): ApiErrorEnvelope {
 export function mapApiError(input: MapApiErrorInput): ApiError {
   const env = envelopeFrom(input.parsedBody);
   const code = env.error_code;
-  let cls: new (
-    f: Partial<TesoteErrorFields> & Pick<TesoteErrorFields, 'errorCode' | 'message'>,
-  ) => ApiError;
+  let cls: ApiErrorCtor;
   let errorCode: string;
   if (code !== undefined && code in ERROR_CODE_MAP) {
     const mapped = ERROR_CODE_MAP[code];

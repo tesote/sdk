@@ -10,16 +10,30 @@ import java.util.function.Consumer;
 /**
  * v2 client. Adds writes for payments + sync orchestration on top of v1.
  *
- * <p>0.1.0 ships the builder + transport plumbing; resource methods stub until
- * they're wired in subsequent commits.
+ * <p>Each accessor returns the same instance for the lifetime of the client.
+ * The client is thread-safe; share it.
  */
 public final class V2Client {
     static final String VERSION_PATH = "/v2";
 
     private final Transport transport;
+    private final StatusClient status;
+    private final AccountsClient accounts;
+    private final TransactionsClient transactions;
+    private final SyncSessionsClient syncSessions;
+    private final TransactionOrdersClient transactionOrders;
+    private final BatchesClient batches;
+    private final PaymentMethodsClient paymentMethods;
 
     private V2Client(Builder b) {
         this.transport = b.transportBuilder.build();
+        this.status = new StatusClient(this.transport);
+        this.accounts = new AccountsClient(this.transport);
+        this.transactions = new TransactionsClient(this.transport);
+        this.syncSessions = new SyncSessionsClient(this.transport);
+        this.transactionOrders = new TransactionOrdersClient(this.transport);
+        this.batches = new BatchesClient(this.transport);
+        this.paymentMethods = new PaymentMethodsClient(this.transport);
     }
 
     public static Builder builder() {
@@ -28,13 +42,13 @@ public final class V2Client {
 
     public Transport transport() { return transport; }
 
-    public Object status() { throw new UnsupportedOperationException("not implemented"); }
-    public Object accounts() { throw new UnsupportedOperationException("not implemented"); }
-    public Object transactions() { throw new UnsupportedOperationException("not implemented"); }
-    public Object syncSessions() { throw new UnsupportedOperationException("not implemented"); }
-    public Object transactionOrders() { throw new UnsupportedOperationException("not implemented"); }
-    public Object batches() { throw new UnsupportedOperationException("not implemented"); }
-    public Object paymentMethods() { throw new UnsupportedOperationException("not implemented"); }
+    public StatusClient status() { return status; }
+    public AccountsClient accounts() { return accounts; }
+    public TransactionsClient transactions() { return transactions; }
+    public SyncSessionsClient syncSessions() { return syncSessions; }
+    public TransactionOrdersClient transactionOrders() { return transactionOrders; }
+    public BatchesClient batches() { return batches; }
+    public PaymentMethodsClient paymentMethods() { return paymentMethods; }
 
     public static final class Builder {
         private final Transport.Builder transportBuilder = Transport.builder();

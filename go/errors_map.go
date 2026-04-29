@@ -80,6 +80,46 @@ func wrapTyped(base *APIError) error {
 		return &InvalidDateRangeError{APIError: base}
 	case "RATE_LIMIT_EXCEEDED":
 		return &RateLimitExceededError{APIError: base}
+	case "ACCOUNT_NOT_FOUND":
+		return &AccountNotFoundError{APIError: base}
+	case "TRANSACTION_NOT_FOUND":
+		return &TransactionNotFoundError{APIError: base}
+	case "SYNC_SESSION_NOT_FOUND":
+		return &SyncSessionNotFoundError{APIError: base}
+	case "PAYMENT_METHOD_NOT_FOUND":
+		return &PaymentMethodNotFoundError{APIError: base}
+	case "TRANSACTION_ORDER_NOT_FOUND":
+		return &TransactionOrderNotFoundError{APIError: base}
+	case "BATCH_NOT_FOUND":
+		return &BatchNotFoundError{APIError: base}
+	case "BANK_CONNECTION_NOT_FOUND":
+		return &BankConnectionNotFoundError{APIError: base}
+	case "INVALID_CURSOR":
+		return &InvalidCursorError{APIError: base}
+	case "INVALID_COUNT":
+		return &InvalidCountError{APIError: base}
+	case "INVALID_LIMIT":
+		return &InvalidLimitError{APIError: base}
+	case "INVALID_QUERY":
+		return &InvalidQueryError{APIError: base}
+	case "MISSING_DATE_RANGE":
+		return &MissingDateRangeError{APIError: base}
+	case "SYNC_IN_PROGRESS":
+		return &SyncInProgressError{APIError: base}
+	case "SYNC_RATE_LIMIT_EXCEEDED":
+		return &SyncRateLimitExceededError{APIError: base}
+	case "BANK_UNDER_MAINTENANCE":
+		return &BankUnderMaintenanceError{APIError: base}
+	case "VALIDATION_ERROR":
+		return &ValidationError{APIError: base}
+	case "INVALID_ORDER_STATE":
+		return &InvalidOrderStateError{APIError: base}
+	case "BANK_SUBMISSION_ERROR":
+		return &BankSubmissionError{APIError: base}
+	case "BATCH_VALIDATION_ERROR":
+		return &BatchValidationError{APIError: base}
+	case "INTERNAL_ERROR":
+		return &InternalError{APIError: base}
 	}
 	switch base.HTTPStatus {
 	case http.StatusUnauthorized:
@@ -98,16 +138,22 @@ func wrapTyped(base *APIError) error {
 
 func fallbackCode(status int) string {
 	switch status {
+	case http.StatusBadRequest:
+		return "VALIDATION_ERROR"
 	case http.StatusUnauthorized:
 		return "UNAUTHORIZED"
 	case http.StatusForbidden:
 		return "FORBIDDEN"
+	case http.StatusNotFound:
+		return "NOT_FOUND"
 	case http.StatusConflict:
 		return "MUTATION_CONFLICT"
 	case http.StatusUnprocessableEntity:
 		return "UNPROCESSABLE_CONTENT"
 	case http.StatusTooManyRequests:
 		return "RATE_LIMIT_EXCEEDED"
+	case http.StatusInternalServerError:
+		return "INTERNAL_ERROR"
 	case http.StatusServiceUnavailable:
 		return "SERVICE_UNAVAILABLE"
 	}
