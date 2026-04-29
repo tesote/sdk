@@ -46,10 +46,13 @@ import java.util.function.Consumer;
  */
 public final class Transport {
     public static final String DEFAULT_BASE_URL = "https://equipo.tesote.com/api";
-    public static final String SDK_VERSION = "0.1.0";
+    public static final String SDK_VERSION = "0.2.0";
 
     private static final List<String> MUTATING_METHODS =
             List.of("POST", "PUT", "PATCH", "DELETE");
+
+    private static final List<String> JSON_BODY_METHODS =
+            List.of("POST", "PUT", "PATCH");
 
     private final HttpClient httpClient;
     private final String baseUrl;
@@ -88,6 +91,104 @@ public final class Transport {
     public RateLimitSnapshot lastRateLimit() {
         return lastRateLimit.get();
     }
+
+    /**
+     * Send a request and return the raw response bytes plus selected headers.
+     * Used by file-download endpoints (e.g., transactions export). Goes through
+     * the full retry / rate-limit / error pipeline like {@link #request(Options)},
+     * but does not parse the body.
+     */
+    public RawResponse requestRaw(Options opts) {
+        Map<String, String> queryView = opts.query == null ? Map.of() : Map.copyOf(opts.query);
+        RequestSummary summary = new RequestSummary(
+                opts.method, opts.path, queryView,
+                opts.bodyShape, redactBearer(apiKey));
+
+        String idempotencyKey = opts.idempotencyKey;
+        if (idempotencyKey == null && MUTATING_METHODS.contains(opts.method)) {
+            idempotencyKey = UUID.randomUUID().toString();
+        }
+
+        IOException lastIo = null;
+        ApiException lastApi = null;
+        for (int attempt = 1; attempt <= retryPolicy.maxAttempts(); attempt++) {
+            HttpRequest httpRequest = build(opts, idempotencyKey);
+            HttpResponse<byte[]> response;
+            try {
+                response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofByteArray());
+            } catch (java.net.http.HttpTimeoutException e) {
+                lastIo = e;
+                if (logger != null) logger.accept(new LogEvent(summary, attempt, -1, e));
+                if (!retryPolicy.retryOnNetwork() || attempt == retryPolicy.maxAttempts()) {
+                    throw new TimeoutException("request timed out", summary, attempt, e);
+                }
+                sleep(backoff(attempt, null));
+                continue;
+            } catch (SSLException e) {
+                throw new TlsException("TLS error: " + e.getMessage(), summary, attempt, e);
+            } catch (ConnectException | UnknownHostException e) {
+                lastIo = e;
+                if (logger != null) logger.accept(new LogEvent(summary, attempt, -1, e));
+                if (!retryPolicy.retryOnNetwork() || attempt == retryPolicy.maxAttempts()) {
+                    throw new NetworkException(e.getMessage(), summary, attempt, e);
+                }
+                sleep(backoff(attempt, null));
+                continue;
+            } catch (IOException e) {
+                lastIo = e;
+                if (logger != null) logger.accept(new LogEvent(summary, attempt, -1, e));
+                if (!retryPolicy.retryOnNetwork() || attempt == retryPolicy.maxAttempts()) {
+                    throw new NetworkException(e.getMessage(), summary, attempt, e);
+                }
+                sleep(backoff(attempt, null));
+                continue;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new TransportException("interrupted", "INTERRUPTED",
+                        0, null, null, null, null, summary, attempt, e) {};
+            }
+
+            captureRateLimit(response);
+            int status = response.statusCode();
+            String requestId = header(response, "X-Request-Id");
+
+            if (logger != null) logger.accept(new LogEvent(summary, attempt, status, null));
+
+            if (status >= 200 && status < 300) {
+                byte[] body = response.body() == null ? new byte[0] : response.body();
+                return new RawResponse(
+                        status, body,
+                        header(response, "Content-Type"),
+                        header(response, "Content-Disposition"),
+                        requestId);
+            }
+
+            ApiException api = buildApiException(opts, summary, response, requestId, attempt);
+            lastApi = api;
+
+            if (shouldRetry(status, attempt)) {
+                Duration sleepFor = backoff(attempt, retryAfterSeconds(response));
+                sleep(sleepFor);
+                continue;
+            }
+            throw api;
+        }
+
+        if (lastApi != null) throw lastApi;
+        if (lastIo != null) throw new NetworkException("retries exhausted", summary,
+                retryPolicy.maxAttempts(), lastIo);
+        throw new NetworkException("unexpected transport state", summary,
+                retryPolicy.maxAttempts(), null);
+    }
+
+    /** Raw HTTP response body + selected headers; returned by {@link #requestRaw(Options)}. */
+    public record RawResponse(
+            int status,
+            byte[] body,
+            String contentType,
+            String contentDisposition,
+            String requestId
+    ) {}
 
     /**
      * Send a request, applying retries / rate-limit awareness / caching.
@@ -216,6 +317,10 @@ public final class Transport {
         HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.noBody();
         if (opts.body != null) {
             body = HttpRequest.BodyPublishers.ofByteArray(opts.body);
+        }
+        // why: spec mandates Content-Type: application/json on every
+        // POST/PUT/PATCH (415 otherwise), even if the body is empty.
+        if (JSON_BODY_METHODS.contains(opts.method)) {
             rb.header("Content-Type", "application/json");
         }
 
@@ -390,6 +495,24 @@ public final class Transport {
 
         public Options cacheTtl(Duration d) { this.cacheTtl = d; return this; }
         public Options idempotencyKey(String k) { this.idempotencyKey = k; return this; }
+
+        /**
+         * Serialize the given POJO as JSON and attach as the request body.
+         * Returns this for chaining.
+         */
+        public Options jsonBody(Object value) {
+            byte[] bytes = com.tesote.sdk.internal.Json.toBytes(value);
+            this.body = bytes;
+            this.bodyShape = bytes.length + " bytes";
+            return this;
+        }
+
+        public Options query(java.util.Map<String, String> entries) {
+            if (entries == null || entries.isEmpty()) return this;
+            if (query == null) query = new HashMap<>();
+            entries.forEach((k, v) -> { if (v != null) query.put(k, v); });
+            return this;
+        }
     }
 
     /** Configurable retry parameters. */
