@@ -4,6 +4,29 @@ All notable changes to `@tesote.com/sdk` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to semver.
 
+## 0.2.0 - 2026-04-28
+
+### Added
+
+- Full v1+v2 resource surface (35 endpoints):
+  - v1: `accounts.list/get/listAll`, `transactions.listForAccount/get/listAllForAccount`,
+    `status.status/whoami`.
+  - v2: `accounts.list/get/sync/listAll`, `transactions.listForAccount/get/export/sync/syncLegacy/bulk/search/listAllForAccount`,
+    `syncSessions.list/get/listAll`, `transactionOrders.list/get/create/submit/cancel/listAll`,
+    `batches.create/get/approve/submit/cancel`,
+    `paymentMethods.list/get/create/update/delete/listAll`, `status.status/whoami`.
+- Typed model interfaces for every payload: `Account`, `Transaction`, `SyncTransaction`,
+  `SyncResult`, `SyncSession`, `TransactionOrder`, `PaymentMethod`, `BatchSummary`,
+  `BulkResult`, `SearchResult`, plus pagination envelopes and request inputs.
+- Cursor- and offset-pagination async iterators (`listAll*`).
+- Typed errors for every API `error_code`: `AccountNotFoundError`, `TransactionNotFoundError`,
+  `SyncSessionNotFoundError`, `PaymentMethodNotFoundError`, `TransactionOrderNotFoundError`,
+  `BatchNotFoundError`, `BankConnectionNotFoundError`, `InvalidOrderStateError`,
+  `SyncInProgressError`, `InvalidCursorError`, `InvalidCountError`, `InvalidLimitError`,
+  `InvalidQueryError`, `MissingDateRangeError`, `BankSubmissionError`, `ValidationError`,
+  `BatchValidationError`, `SyncRateLimitExceededError`, `BankUnderMaintenanceError`,
+  `InternalServerError`, plus a generic `NotFoundError` base.
+
 ## 0.1.1 - 2026-04-28
 
 ### Changed

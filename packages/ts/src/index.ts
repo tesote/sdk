@@ -16,21 +16,42 @@ export { V2Client, type V2ClientOptions } from './v2/index.js';
 export {
   ApiError,
   AccountDisabledError,
+  AccountNotFoundError,
   ApiKeyRevokedError,
+  BankConnectionNotFoundError,
+  BankSubmissionError,
+  BankUnderMaintenanceError,
+  BatchNotFoundError,
+  BatchValidationError,
   ConfigError,
   EndpointRemovedError,
   HistorySyncForbiddenError,
+  InternalServerError,
+  InvalidCountError,
+  InvalidCursorError,
   InvalidDateRangeError,
+  InvalidLimitError,
+  InvalidOrderStateError,
+  InvalidQueryError,
+  MissingDateRangeError,
   MutationDuringPaginationError,
   NetworkError,
+  NotFoundError,
+  PaymentMethodNotFoundError,
   RateLimitExceededError,
   ServiceUnavailableError,
+  SyncInProgressError,
+  SyncRateLimitExceededError,
+  SyncSessionNotFoundError,
   TesoteError,
   TimeoutError,
   TlsError,
+  TransactionNotFoundError,
+  TransactionOrderNotFoundError,
   TransportError,
   UnauthorizedError,
   UnprocessableContentError,
+  ValidationError,
   WorkspaceSuspendedError,
   mapApiError,
   redactBearer,
@@ -55,3 +76,60 @@ export {
   type RetryPolicy,
   type TransportOptions,
 } from './transport.js';
+
+export type {
+  Account,
+  AccountData,
+  AccountBank,
+  AccountLegalEntity,
+  AccountListResponse,
+  PageBasedPagination,
+} from './models/account.js';
+export type {
+  Transaction,
+  TransactionData,
+  TransactionCategory,
+  TransactionCounterparty,
+  TransactionListResponse,
+  CursorPagination,
+} from './models/transaction.js';
+export type {
+  SyncTransaction,
+  SyncRemoved,
+  SyncResult,
+} from './models/sync_transaction.js';
+export type {
+  SyncSession,
+  SyncSessionError,
+  SyncSessionPerformance,
+} from './models/sync_session.js';
+export type {
+  TransactionOrder,
+  TransactionOrderStatus,
+  TransactionOrderSourceAccount,
+  TransactionOrderDestination,
+  TransactionOrderFee,
+  TransactionOrderTesoteTransaction,
+  TransactionOrderLatestAttempt,
+  Beneficiary,
+} from './models/transaction_order.js';
+export type {
+  PaymentMethod,
+  PaymentMethodType,
+  PaymentMethodDetails,
+  PaymentMethodCounterparty,
+  PaymentMethodTesoteAccount,
+} from './models/payment_method.js';
+export type {
+  BatchSummary,
+  BatchStatus,
+  BatchStatusCounts,
+  BatchCreateResponse,
+  BatchApproveResponse,
+  BatchSubmitResponse,
+  BatchCancelResponse,
+} from './models/batch.js';
+export type { BulkResult, BulkResponse } from './models/bulk.js';
+export type { SearchResult } from './models/search.js';
+export type { OffsetPaginationResponse } from './models/pagination.js';
+export type { StatusResponse, WhoamiResponse, WhoamiClient } from './models/status.js';
