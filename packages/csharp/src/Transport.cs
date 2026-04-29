@@ -33,7 +33,7 @@ public sealed class Transport : IAsyncDisposable, IDisposable
     public const string DefaultBaseUrl = "https://equipo.tesote.com/api";
 
     /// <summary>Current SDK version, exposed for User-Agent.</summary>
-    public const string SdkVersion = "0.1.0";
+    public const string SdkVersion = "0.2.0";
 
     private static readonly HashSet<string> MutatingMethods =
         new(StringComparer.OrdinalIgnoreCase) { "POST", "PUT", "PATCH", "DELETE" };
@@ -248,6 +248,137 @@ public sealed class Transport : IAsyncDisposable, IDisposable
         }
 
         // why: loop only exits via throw on terminal failure or return on success.
+        if (lastApi is not null)
+        {
+            throw lastApi;
+        }
+        if (lastTransport is not null)
+        {
+            throw new NetworkException("retries exhausted", summary, _retryPolicy.MaxAttempts, lastTransport);
+        }
+        throw new NetworkException("unexpected transport state", summary, _retryPolicy.MaxAttempts, null);
+    }
+
+    /// <summary>
+    /// Send a request and return the raw response body alongside content-type.
+    /// Used for file-download endpoints (CSV / JSON export) where the body is not a JSON envelope.
+    /// Bypasses caching; still applies retries, rate-limit awareness, idempotency, and error mapping.
+    /// </summary>
+    public async Task<RawResponse> RequestRawAsync(RequestOptions options, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ThrowIfDisposed();
+
+        var summary = RequestSummary.Create(
+            options.Method, options.Path, options.Query,
+            options.BodyShape, RedactBearer(_apiKey));
+
+        var idempotencyKey = options.IdempotencyKey;
+        if (idempotencyKey is null && MutatingMethods.Contains(options.Method))
+        {
+            idempotencyKey = Guid.NewGuid().ToString();
+        }
+
+        Exception? lastTransport = null;
+        ApiException? lastApi = null;
+
+        for (var attempt = 1; attempt <= _retryPolicy.MaxAttempts; attempt++)
+        {
+            using var request = BuildRequest(options, idempotencyKey);
+            HttpResponseMessage? response = null;
+            byte[]? body = null;
+            try
+            {
+                response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false);
+                body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                response?.Dispose();
+                lastTransport = ex;
+                _logger?.Invoke(new LogEvent(summary, attempt, -1, ex));
+                if (!_retryPolicy.RetryOnNetwork || attempt == _retryPolicy.MaxAttempts)
+                {
+                    throw new TesoteTimeoutException("request timed out", summary, attempt, ex);
+                }
+                await Task.Delay(Backoff(attempt, null), cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                response?.Dispose();
+                throw;
+            }
+            catch (HttpRequestException ex) when (IsTlsError(ex))
+            {
+                response?.Dispose();
+                throw new TlsException("TLS error: " + ex.Message, summary, attempt, ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                response?.Dispose();
+                lastTransport = ex;
+                _logger?.Invoke(new LogEvent(summary, attempt, -1, ex));
+                if (!_retryPolicy.RetryOnNetwork || attempt == _retryPolicy.MaxAttempts)
+                {
+                    throw new NetworkException(ex.Message, summary, attempt, ex);
+                }
+                await Task.Delay(Backoff(attempt, null), cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+            catch (IOException ex)
+            {
+                response?.Dispose();
+                lastTransport = ex;
+                _logger?.Invoke(new LogEvent(summary, attempt, -1, ex));
+                if (!_retryPolicy.RetryOnNetwork || attempt == _retryPolicy.MaxAttempts)
+                {
+                    throw new NetworkException(ex.Message, summary, attempt, ex);
+                }
+                await Task.Delay(Backoff(attempt, null), cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+            catch (SocketException ex)
+            {
+                response?.Dispose();
+                lastTransport = ex;
+                _logger?.Invoke(new LogEvent(summary, attempt, -1, ex));
+                if (!_retryPolicy.RetryOnNetwork || attempt == _retryPolicy.MaxAttempts)
+                {
+                    throw new NetworkException(ex.Message, summary, attempt, ex);
+                }
+                await Task.Delay(Backoff(attempt, null), cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            using (response)
+            {
+                CaptureRateLimit(response);
+                var status = (int)response.StatusCode;
+                var requestId = FirstHeader(response, "X-Request-Id");
+                _logger?.Invoke(new LogEvent(summary, attempt, status, null));
+
+                if (status >= 200 && status < 300)
+                {
+                    var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+                    var contentDisposition = response.Content.Headers.ContentDisposition?.ToString();
+                    return new RawResponse(body ?? Array.Empty<byte>(), contentType, contentDisposition, requestId, status);
+                }
+
+                var api = BuildApiException(summary, response, body, requestId, attempt);
+                lastApi = api;
+
+                if (ShouldRetry(status, attempt))
+                {
+                    var sleepFor = Backoff(attempt, RetryAfterSeconds(response));
+                    await Task.Delay(sleepFor, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+                throw api;
+            }
+        }
+
         if (lastApi is not null)
         {
             throw lastApi;
