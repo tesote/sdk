@@ -1,10 +1,11 @@
-"""v1 client -- read-only accounts and transactions."""
+"""v1 client -- read-only accounts and transactions, plus status/whoami."""
 
 from __future__ import annotations
 
 from typing import Optional
 
 from .._base_client import build_transport
+from ..models import StatusResponse, WhoAmI
 from ..transport import (
     DEFAULT_BASE_URL,
     DEFAULT_CONNECT_TIMEOUT,
@@ -55,6 +56,12 @@ class V1Client:
     @property
     def last_rate_limit(self) -> object:
         return self._transport.last_rate_limit
+
+    def status(self) -> StatusResponse:
+        return self.status_resource.status()
+
+    def whoami(self) -> WhoAmI:
+        return self.status_resource.whoami()
 
 
 __all__ = ["V1Client"]
