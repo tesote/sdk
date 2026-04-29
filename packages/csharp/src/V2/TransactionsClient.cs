@@ -92,7 +92,7 @@ public sealed class TransactionsClient
     }
 
     /// <summary>List transactions for an account with the full v2 filter surface.</summary>
-    public async Task<TransactionListResponse> ListAsync(
+    public async Task<TransactionListResponse> ListForAccountAsync(
         string accountId,
         ListFilters? filters = null,
         CancellationToken ct = default)

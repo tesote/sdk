@@ -44,7 +44,7 @@ public sealed class TransactionsTests : System.IDisposable
                           "\"pagination\":{\"has_more\":false,\"per_page\":50,\"after_id\":\"tx_1\",\"before_id\":\"tx_1\"}}"));
 
         using var client = TestHelpers.NewV1(_server.Url + "/api");
-        var result = await client.Accounts.ListTransactionsAsync("acc_1", perPage: 50);
+        var result = await client.Transactions.ListForAccountAsync("acc_1", perPage: 50);
         Assert.Equal(1, result.Total);
         Assert.Equal("tx_1", result.Transactions[0].Id);
         Assert.Equal(1000, result.Transactions[0].Data.AmountCents);
@@ -61,7 +61,7 @@ public sealed class TransactionsTests : System.IDisposable
 
         using var client = TestHelpers.NewV2(_server.Url + "/api");
         var ex = await Assert.ThrowsAsync<InvalidDateRangeException>(
-            () => client.Transactions.ListAsync("acc_1"));
+            () => client.Transactions.ListForAccountAsync("acc_1"));
         Assert.IsAssignableFrom<UnprocessableContentException>(ex);
     }
 
