@@ -97,3 +97,7 @@ End-user docs + API reference live at `../tesote.com` (`www.tesote.com/docs/sdk`
 - Files under ~500 LOC; split into smaller modules.
 - No `rescue Exception` / catch-all handlers — typed errors only.
 - No safe-navigation (`&.`, `?.`, `?:`) hiding nil — make nil explicit or refactor it out.
+
+## Note
+
+Do not use git worktrees — work directly in this checkout. See `.claude/commands/feature.md` and `.claude/commands/planx.md`.
