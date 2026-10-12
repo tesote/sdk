@@ -33,7 +33,7 @@ defaults:
 
 jobs:
   test:
-    runs-on: blacksmith-2vcpu-ubuntu-2204
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +53,7 @@ jobs:
   release:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # why: npm sigstore provenance only accepts github-hosted runners — Blacksmith is rejected.
+    # why: npm sigstore provenance only accepts github-hosted runners.
     runs-on: ubuntu-latest
     permissions:
       id-token: write
