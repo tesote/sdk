@@ -1,6 +1,6 @@
 # Release
 
-Per-language, version-file-driven, automated. All jobs on **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`).
+Per-language, version-file-driven, automated. All jobs on **GitHub-hosted** (`runs-on: ubuntu-22.04`).
 
 ## How a release happens
 

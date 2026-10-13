@@ -67,7 +67,7 @@ One class per `error_code` (full table in [errors.md](docs/architecture/errors.m
 
 ## CI / release
 
-Runners: **Blacksmith 2vcpu** (`runs-on: blacksmith-2vcpu-ubuntu-2204`). One workflow per language at `.github/workflows/<lang>.yml`, **two jobs** gated by a workflow-level `paths:` filter (only the affected language runs):
+Runners: **GitHub-hosted** (`runs-on: ubuntu-22.04`). One workflow per language at `.github/workflows/<lang>.yml`, **two jobs** gated by a workflow-level `paths:` filter (only the affected language runs):
 
 1. **`test`** — matrix across floor + latest LTS + current stable; lint + unit + integration replay.
 2. **`release`** — `needs: test`, runs on push to `main`. Reads the language's version source file; if a `<lang>-v<version>` tag does not yet exist, builds, publishes, creates the tag, opens a GitHub Release. Idempotent.
@@ -88,7 +88,7 @@ End-user docs + API reference live at `../tesote.com` (`www.tesote.com/docs/sdk`
 - [resources.md](docs/architecture/resources.md) — endpoint inventory by version
 - [auth.md](docs/architecture/auth.md) — bearer-token rules
 - [testing.md](docs/architecture/testing.md) — unit / replay / smoke layers
-- [release.md](docs/architecture/release.md) — Blacksmith CI, version-file-driven releases, OIDC
+- [release.md](docs/architecture/release.md) — GitHub-hosted CI, version-file-driven releases, OIDC
 
 ## Style
 

@@ -8,7 +8,7 @@ How every `tesote-sdk` (TS, Python, Ruby, Java, PHP, Go) is structured. Read in 
 4. [resources.md](resources.md) — endpoint inventory across API versions
 5. [auth.md](auth.md) — bearer-token auth, key-type rules
 6. [testing.md](testing.md) — unit / replay / smoke layers; cross-language parity
-7. [release.md](release.md) — Blacksmith 2vcpu CI, per-language tag-driven releases, OIDC
+7. [release.md](release.md) — GitHub-hosted CI, per-language tag-driven releases, OIDC
 
 ## Non-negotiables
 

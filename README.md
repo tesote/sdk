@@ -165,7 +165,7 @@ This repo is a multi-language monorepo. Each language is independently testable 
 | Lint | language-native (`biome`, `ruff`, `rubocop`, `spotless`, `phpstan`, `golangci-lint`, `dotnet format`) |
 | Replay-record | `bin/record-cassettes` (per-language; needs staging key) |
 
-CI runs on **Blacksmith 2vcpu** runners. Releases are tag-driven per language: `ts-v1.4.2`, `python-v0.9.0`, etc. See [`docs/architecture/release.md`](docs/architecture/release.md).
+CI runs on **GitHub-hosted** runners. Releases are tag-driven per language: `ts-v1.4.2`, `python-v0.9.0`, etc. See [`docs/architecture/release.md`](docs/architecture/release.md).
 
 ---
 
@@ -179,7 +179,7 @@ CI runs on **Blacksmith 2vcpu** runners. Releases are tag-driven per language: `
 | [resources.md](docs/architecture/resources.md)   | endpoint inventory by version |
 | [auth.md](docs/architecture/auth.md)             | bearer token, key-type rules |
 | [testing.md](docs/architecture/testing.md)       | unit / replay / smoke layers, cross-language parity |
-| [release.md](docs/architecture/release.md)       | Blacksmith CI + per-language tag releases |
+| [release.md](docs/architecture/release.md)       | GitHub-hosted CI + per-language tag releases |
 
 Start here: [`docs/architecture/README.md`](docs/architecture/README.md).
 
