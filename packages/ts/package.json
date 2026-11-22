@@ -62,6 +62,9 @@
     "@types/node": "^22.0",
     "tsup": "^8.3",
     "typescript": "^5.6",
-    "vitest": "^5.1.1"
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "vite": "6.4.6"
   }
 }
