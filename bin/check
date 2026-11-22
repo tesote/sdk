@@ -8,7 +8,14 @@ cd "$(dirname "$0")/.."
 full_gate() (
   exec 9>&-
   set -e
-  (cd 'go' && mise exec go@1.21 -- go vet ./... && mise exec go@1.21 -- go test ./...) && (cd 'packages/python' && ./.venv/bin/python -m ruff check . && ./.venv/bin/python -m pytest) && (cd 'packages/ruby' && mise exec ruby@3.0 -- bundle exec ruby -S rubocop && mise exec ruby@3.0 -- bundle exec ruby -S rspec) && (cd 'packages/ts' && npm run typecheck && npm run lint && npm run test)
+  if command -v mise >/dev/null 2>&1; then
+    go_command=(mise exec go@1.21 --)
+    ruby_command=(mise exec ruby@3.0 --)
+  else
+    go_command=()
+    ruby_command=()
+  fi
+  (cd 'go' && "${go_command[@]}" go vet ./... && "${go_command[@]}" go test ./...) && (cd 'packages/python' && ./.venv/bin/python -m ruff check . && ./.venv/bin/python -m pytest) && (cd 'packages/ruby' && "${ruby_command[@]}" bundle exec ruby -S rubocop && "${ruby_command[@]}" bundle exec ruby -S rspec) && (cd 'packages/ts' && npm run typecheck && npm run lint && npm run test)
 )
 
 paths=()
