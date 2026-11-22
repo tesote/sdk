@@ -58,7 +58,7 @@
     "provenance": true
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9",
+    "@biomejs/biome": "^2.6",
     "@types/node": "^26.6",
     "tsup": "^9.0",
     "typescript": "^5.6",
