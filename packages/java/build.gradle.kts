@@ -5,7 +5,7 @@ plugins {
     // why: 0.1.0 has a broken transitive snapshot dep on
     // com.gradleup.gratatouille:gratatouille-runtime that's no longer in
     // the plugin portal; pinning to 0.0.9 (last good release).
-    id("com.gradleup.nmcp") version "0.0.9"
+    id("com.gradleup.nmcp") version "1.6.2"
 }
 
 group = "com.tesote"
