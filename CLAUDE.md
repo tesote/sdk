@@ -34,7 +34,7 @@ Each SDK is independently implemented, tested, versioned, and released. Do not s
 | Python | `cd packages/python && pip install -e .[test] && ruff check . && mypy src && pytest` |
 | Ruby | `cd packages/ruby && bundle install && bundle exec rubocop && bundle exec rspec` |
 | Java | `cd packages/java && ./gradlew test --no-daemon` |
-| PHP | `composer install --no-interaction --no-progress --prefer-dist && composer cs-check && composer phpstan -- --no-progress && composer test -- --colors=never` |
+| PHP | `cd packages/php && composer install --no-interaction --no-progress --prefer-dist && composer cs-check && composer phpstan -- --no-progress && composer test -- --colors=never` |
 | Go | `cd go && test -z "$(gofmt -l .)" && go vet ./... && go test -race -count=1 ./...` |
 | C# / .NET | `cd packages/csharp && dotnet restore && dotnet build --configuration Release --no-restore && dotnet test --configuration Release --no-build` |
 
