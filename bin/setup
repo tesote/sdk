@@ -6,6 +6,9 @@ if command -v mise >/dev/null 2>&1; then
   go_command=(mise exec go@1.21 --)
   ruby_command=(mise exec ruby@3.0 --)
   mise install
+  if ! mise which go >/dev/null 2>&1; then
+    mise use -g go@1.21
+  fi
   (cd 'go' && "${go_command[@]}" go mod download)
   (cd 'packages/python' && mise exec python@3.9 -- python -m venv .venv)
 else
