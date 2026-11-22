@@ -6,15 +6,15 @@ import {
   HistorySyncForbiddenError,
   InvalidDateRangeError,
   MutationDuringPaginationError,
+  mapApiError,
   RateLimitExceededError,
   type RequestSummary,
+  redactBearer,
   ServiceUnavailableError,
   type TesoteError,
   UnauthorizedError,
   UnprocessableContentError,
   WorkspaceSuspendedError,
-  mapApiError,
-  redactBearer,
 } from '../src/errors.js';
 
 const SUMMARY: RequestSummary = {
