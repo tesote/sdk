@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# one-command dev — established by the developerz.ai maintainer agent for the maintainers of this repository. One command; adjust as the repo grows.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+(cd 'go' && echo "TODO(setup): name the main package bin/dev runs (go run ./cmd/<name>)"; exit 1) & (cd 'packages/python' && ./.venv/bin/python -m app) & (cd 'packages/ruby' && bundle exec rackup) & (cd 'packages/ts' && npm run dev) & wait
