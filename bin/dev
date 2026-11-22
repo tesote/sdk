@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# one-command dev — established by the developerz.ai maintainer agent for the maintainers of this repository. One command; adjust as the repo grows.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# This repository publishes SDK libraries, not a service with a development server.
+# Run the supported development workflow and preserve its status for callers.
+exec ./bin/check "$@"

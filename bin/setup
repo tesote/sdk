@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# one-command setup — established by the developerz.ai maintainer agent for the maintainers of this repository. One command; adjust as the repo grows.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+if command -v mise >/dev/null 2>&1; then
+  go_command=(mise exec go@1.21 --)
+  ruby_command=(mise exec ruby@3.0 --)
+  mise install
+  (cd 'go' && "${go_command[@]}" go mod download)
+  (cd 'packages/python' && mise exec python@3.9 -- python -m venv .venv)
+else
+  go_command=()
+  ruby_command=()
+  (cd 'go' && "${go_command[@]}" go mod download)
+  (cd 'packages/python' && python -m venv .venv)
+fi
+
+(cd 'packages/python' && ./.venv/bin/pip install -e '.[test]') && (cd 'packages/ruby' && "${ruby_command[@]}" bundle install) && (cd 'packages/ts' && npm ci)
