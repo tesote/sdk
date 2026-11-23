@@ -1,0 +1,108 @@
+# Dependency updates for tesote/sdk (established by the developerz.ai maintainer agent for the maintainers of this repository).
+# Proposed by developerz.ai onboarding, because this repository
+# had no dependency-update configuration. Dependabot opens the update pull requests
+# weekly; developerz.ai reviews them, and whether they merge automatically follows
+# this repository's merge policy. Minor and patch updates arrive as one pull request
+# per ecosystem; a major update arrives on its own. Edit this file to change what is
+# updated or when, or delete it to stop.
+# Why updates wait 14 days and a security update does not: https://github.com/developerz-ai/gold-standards-in-ai/blob/main/docs/developer-experience/dependency-updates.md
+version: 2
+updates:
+  - package-ecosystem: "bundler"
+    directory: "/packages/ruby"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      bundler-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      composer-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      github-actions-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "gomod"
+    directory: "/go"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      gomod-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "gradle"
+    directory: "/packages/java"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      gradle-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "npm"
+    directory: "/packages/ts"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      npm-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "nuget"
+    directories:
+      - "/packages/csharp/src"
+      - "/packages/csharp/tests"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      nuget-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "pip"
+    directory: "/packages/python"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "12:00"
+    cooldown:
+      default-days: 14
+    groups:
+      pip-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]

@@ -2,10 +2,6 @@ plugins {
     `java-library`
     `maven-publish`
     signing
-    // why: 0.1.0 has a broken transitive snapshot dep on
-    // com.gradleup.gratatouille:gratatouille-runtime that's no longer in
-    // the plugin portal; pinning to 0.0.9 (last good release).
-    id("com.gradleup.nmcp") version "0.0.9"
 }
 
 group = "com.tesote"
@@ -102,14 +98,10 @@ signing {
     }
 }
 
-nmcp {
-    // why: nmcp 0.0.9 — `publish("<publication-name>")` block creates the task
-    // `publish<PublicationName>PublicationToCentralPortal`. AUTOMATIC means
-    // the Central Portal releases as soon as validation passes (no manual
-    // "promote" step in the portal UI).
-    publish("maven") {
-        username.set(providers.environmentVariable("MAVEN_CENTRAL_USERNAME"))
-        password.set(providers.environmentVariable("MAVEN_CENTRAL_PASSWORD"))
-        publicationType.set("AUTOMATIC")
-    }
+// Keep the release workflow's published task name while NMCP 1.6.2 aggregates
+// publications through the settings plugin.
+tasks.register("publishMavenPublicationToCentralPortal") {
+    group = "publishing"
+    description = "Publishes the Maven publication through NMCP aggregation."
+    dependsOn("publishAggregationToCentralPortal")
 }

@@ -12,22 +12,22 @@
 import { InMemoryLRUCache } from './cache.js';
 import {
   ConfigError,
+  mapApiError,
   NetworkError,
   type RequestSummary,
-  TimeoutError,
-  mapApiError,
   redactBearer,
+  TimeoutError,
 } from './errors.js';
 import {
-  DEFAULT_BASE_URL,
-  DEFAULT_RETRY_POLICY,
-  MUTATING_METHODS,
   backoffDelay,
   bodyShape,
   buildQueryString,
   buildUserAgent,
   classifyFetchError,
+  DEFAULT_BASE_URL,
+  DEFAULT_RETRY_POLICY,
   isTypedSdkError,
+  MUTATING_METHODS,
   readRateLimit,
   safeJsonParse,
   sleep,
@@ -44,8 +44,8 @@ import type {
   TransportOptions,
 } from './transport_types.js';
 
-export { DEFAULT_BASE_URL, DEFAULT_RETRY_POLICY, SDK_VERSION } from './transport_internals.js';
 export { InMemoryLRUCache } from './cache.js';
+export { DEFAULT_BASE_URL, DEFAULT_RETRY_POLICY, SDK_VERSION } from './transport_internals.js';
 export type {
   CacheBackend,
   CacheEntry,
